@@ -1,0 +1,12 @@
+{
+  "name": "@jovita/runtime",
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "exports": { ".": { "types": "./index.d.ts", "import": "./index.js" } },
+  "files": ["index.js", "index.d.ts"],
+  "scripts": {
+    "build": "node --check index.js",
+    "test": "node --test index.test.mjs"
+  }
+}

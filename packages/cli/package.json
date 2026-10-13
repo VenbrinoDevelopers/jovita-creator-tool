@@ -1,0 +1,21 @@
+{
+  "name": "@jovita/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "bin": { "jov": "./dist/index.js" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test src/lib/{manifest,runtime,artifacts,bundle-size,creator-api}.test.ts"
+  },
+  "dependencies": {
+    "@jovita/sdk": "0.1.0",
+    "commander": "^14.0.3",
+    "esbuild": "^0.25.0",
+    "jszip": "^3.10.1",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": { "@types/node": "^22.13.10", "typescript": "^5.9.3" }
+}

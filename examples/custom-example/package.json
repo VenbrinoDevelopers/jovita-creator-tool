@@ -1,0 +1,19 @@
+{
+  "name": "custom-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@jovita/sdk": "file:../../packages/sdk",
+    "@jovita/runtime": "file:../../packages/runtime",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@jovita/cli": "file:../../packages/cli",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "dev": "jov dev lookup --input '{\"query\":\"hello\"}'",
+    "build": "jov build --target linux-amd64"
+  }
+}

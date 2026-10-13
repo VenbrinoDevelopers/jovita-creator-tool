@@ -1,0 +1,12 @@
+{
+  "name": "jovita-creator-tool",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "npm run build -w @jovita/runtime && npm run build -w @jovita/sdk && npm run build -w @jovita/cli",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck -w @jovita/sdk && npm run typecheck -w @jovita/cli"
+  }
+}

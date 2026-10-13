@@ -1,0 +1,18 @@
+{
+  "name": "@jovita/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./runtime": { "types": "./runtime/index.d.ts", "import": "./runtime/index.js" }
+  },
+  "files": ["dist", "runtime"],
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": { "@jovita/runtime": "0.1.0", "ajv": "^8.17.1", "zod": "^4.1.12" },
+  "devDependencies": { "@types/node": "^22.13.10", "typescript": "^5.9.3" }
+}
