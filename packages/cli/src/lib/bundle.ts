@@ -36,7 +36,6 @@ export async function buildBundle({
       category: config.category,
       description: config.description,
       logoUrl: config.logoUrl,
-      presentation: config.presentation,
       activityProtocolVersion: config.activityProtocolVersion,
       auth: config.auth,
       providers: config.providers,

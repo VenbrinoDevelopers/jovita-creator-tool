@@ -2,7 +2,7 @@ import { JovitaApp, type AppOptions } from './app.js';
 import type { BrokerOperation, RuntimeBuildConfig, ServiceConfig } from './contracts.js';
 
 export interface CommandAppOptions extends Omit<ServiceConfig,
-  'activityProtocolVersion' | 'runtime' | 'skill' | 'providers' | 'category'> {
+  'activityProtocolVersion' | 'runtime' | 'skill' | 'providers' | 'category' | 'presentation'> {
   category?: string;
   providers?: ServiceConfig['providers'];
   skill?: ServiceConfig['skill'];
@@ -36,7 +36,7 @@ export class CommandApp extends JovitaApp {
   constructor(readonly declaration: CommandAppOptions) {
     super({ id: declaration.id, name: declaration.name, version: declaration.version,
       category: declaration.category ?? 'productivity', description: declaration.description,
-      logoUrl: declaration.logoUrl, presentation: declaration.presentation as AppOptions['presentation'],
+      logoUrl: declaration.logoUrl,
       compat: declaration.compat as JovitaApp['config']['compat'] });
   }
 

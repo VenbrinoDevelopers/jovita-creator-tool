@@ -1,9 +1,9 @@
 import type { BrokerOperation, ServiceConfig } from './contracts.js';
 
-export type RuntimeAppDeclaration = Omit<ServiceConfig, 'skill'> & { skill?: ServiceConfig['skill'] };
+export type RuntimeAppDeclaration = Omit<ServiceConfig, 'skill' | 'presentation'> & { skill?: ServiceConfig['skill'] };
 
 /** App metadata plus the command operations that may call the broker. */
-export interface RuntimeAppOptions extends Omit<ServiceConfig, 'category' | 'providers' | 'skill' | 'runtime' | 'activityProtocolVersion' | 'compat'> {
+export interface RuntimeAppOptions extends Omit<ServiceConfig, 'category' | 'providers' | 'skill' | 'runtime' | 'activityProtocolVersion' | 'compat' | 'presentation'> {
   category?: string;
   providers?: ServiceConfig['providers'];
   skill?: ServiceConfig['skill'];

@@ -1,6 +1,6 @@
 {
   "name": "@jovita-ai/sdk",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "TypeScript declarations and workflows for Jovita apps",
   "license": "MIT",
   "repository": {

@@ -5,6 +5,7 @@ export interface ServiceConfig {
   category: string;
   description: string;
   logoUrl?: string;
+  /** @deprecated Legacy JSON input only. Buyer-facing copy is edited in Creator Studio and is not bundled. */
   presentation?: ServicePresentation;
   activityProtocolVersion?: 1;
   billing?: unknown;

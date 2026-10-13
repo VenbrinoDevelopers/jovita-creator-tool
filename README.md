@@ -63,7 +63,7 @@ jov submit build/web-search-1.0.0-linux-amd64.jov --price-cents 0
 
 `jov login` uses the creator email code flow and saves rotating session tokens under `~/.config/jovita/creator-session.json` with owner-only file permissions. Set `JOVITA_API_URL` to another HTTPS API origin for a nonproduction environment. For automation, `JOVITA_CREATOR_TOKEN` can replace a saved session. Run `jov logout` to remove the local session.
 
-The server imports the public declaration and requests host approval. If approval or a tested connection is missing, `jov submit` leaves the release as a draft. Finish setup, then rerun with `--release-id`. The release still needs Jovita's publishing review. Neither the CLI nor SDK handles the buyer's card or wallet; Jovita reserves and settles the declared credits for each successful operation call.
+The server imports the public broker operation declaration and requests host approval. If approval or a tested connection is missing, `jov submit` leaves the release as a draft. Finish setup, then rerun with `--release-id`. Fill in the buyer-facing store listing, prompts, and examples in Creator Studio when uploading or afterward; they are not part of the SDK app declaration. The release still needs Jovita's publishing review. Neither the CLI nor SDK handles the buyer's card or wallet; Jovita reserves and settles the declared credits for each successful operation call.
 
 ## Custom apps
 
@@ -73,7 +73,7 @@ The SDK compiles both styles into the same manifest and `.jov` format. Existing 
 
 ## Command-backed apps
 
-A command-backed app can keep an established CLI workflow and declare its tools with `defineApp`. Put `runtime/jovita.app.ts` beside the command source. A command tool defines the CLI argument route, its allowed broker calls, activity, and billing requirement. Larger apps can keep these declarations in `runtime/tools.ts` and storefront details in `runtime/release-metadata.ts`. `jov sync` writes a generated `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. The SDK declaration remains the authoring source.
+A command-backed app can keep an established CLI workflow and declare its tools with `defineApp`. Put `runtime/jovita.app.ts` beside the command source. A command tool defines the CLI argument route, its allowed broker calls, activity, and billing requirement. Larger apps can keep these technical declarations in `runtime/tools.ts` and `runtime/release-metadata.ts`. Store copy belongs in Creator Studio. `jov sync` writes a generated `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. The SDK declaration remains the authoring source.
 
 ```ts
 import { defineApp } from '@jovita-ai/sdk';

@@ -152,7 +152,7 @@ test('rejects an unbounded total broker call budget', () => {
   assert.ok(validateManifest(config).errors.some(error => error.field.includes('capabilityLimits')));
 });
 
-test('preserves customer-facing presentation metadata in the published manifest', () => {
+test('keeps customer-facing presentation metadata out of the published technical manifest', () => {
   const config = brokeredConfig();
   config.presentation = {
     details: 'A detailed explanation written for customers.',
@@ -172,7 +172,7 @@ test('preserves customer-facing presentation metadata in the published manifest'
     signature: 'signature',
   });
 
-  assert.deepEqual(manifest.presentation, config.presentation);
+  assert.equal('presentation' in manifest, false);
 });
 
 test('accepts build-only runtime optimization settings but never publishes them', () => {
