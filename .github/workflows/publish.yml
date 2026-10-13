@@ -33,7 +33,7 @@ jobs:
           for package in sdk cli; do
             actual="$(node -p "require('./packages/$package/package.json').version")"
             test "$version" = "$actual" || {
-              echo "Tag version $version does not match @jovita/$package@$actual" >&2
+              echo "Tag version $version does not match @jovita-ai/$package@$actual" >&2
               exit 1
             }
           done

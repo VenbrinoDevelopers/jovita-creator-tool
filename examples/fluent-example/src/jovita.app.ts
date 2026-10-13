@@ -1,4 +1,4 @@
-import { defineApp, provider } from '@jovita/sdk';
+import { defineApp, provider } from '@jovita-ai/sdk';
 import { z } from 'zod';
 
 const example = provider({

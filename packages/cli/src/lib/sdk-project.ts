@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { build } from 'esbuild';
 import { tsImport } from 'tsx/esm/api';
-import { JovitaApp, RuntimeApp, compileApp, isRuntimeApp } from '@jovita/sdk';
-import type { ServiceConfig } from '@jovita/sdk';
+import { JovitaApp, RuntimeApp, compileApp, isRuntimeApp } from '@jovita-ai/sdk';
+import type { ServiceConfig } from '@jovita-ai/sdk';
 
 export function sdkProjectPath(root: string): string | undefined {
   const candidates = [resolve(root, 'runtime/jovita.app.ts'), resolve(root, 'runtime/jovita.app.js'),
@@ -83,7 +83,7 @@ export async function prepareSdkProject(projectRoot: string): Promise<PreparedSd
     const runtimeRoot = resolve(root, 'runtime');
     const dist = resolve(runtimeRoot, 'dist');
     mkdirSync(dist, { recursive: true });
-    const sdkUrl = import.meta.resolve('@jovita/sdk');
+    const sdkUrl = import.meta.resolve('@jovita-ai/sdk');
     const runtimeSource = `import App from ${JSON.stringify(source)};\nimport { runCli } from ${JSON.stringify(fileURLToPath(sdkUrl))};\nawait runCli(typeof App === 'function' ? new App() : App);\n`;
     await build({ stdin: { contents: runtimeSource, resolveDir: projectRoot, sourcefile: 'jovita-runtime.ts', loader: 'ts' },
       outfile: resolve(dist, 'index.js'), bundle: true, platform: 'node', format: 'esm', target: 'node22',

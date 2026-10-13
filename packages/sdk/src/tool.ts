@@ -1,4 +1,4 @@
-import { capabilityContext, invokeCapability, stableCallId } from '@jovita/runtime';
+import { capabilityContext, invokeCapability, stableCallId } from '@jovita-ai/runtime';
 import { validateValue, type Schema, type InputOf, type OutputOf } from './schema.js';
 import { ApiOperation } from './provider.js';
 import type { JovitaActivitySpecV1 } from './contracts.js';

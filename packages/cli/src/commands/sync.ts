@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
-import { isRuntimeApp } from '@jovita/sdk';
+import { isRuntimeApp } from '@jovita-ai/sdk';
 import { loadProjectDefinition } from '../lib/sdk-project.js';
 import { validateManifest } from '../lib/manifest.js';
 

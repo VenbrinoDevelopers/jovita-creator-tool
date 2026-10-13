@@ -1,5 +1,5 @@
 {
-  "name": "@jovita/runtime",
+  "name": "@jovita-ai/runtime",
   "version": "0.1.0",
   "description": "Authenticated broker call client for Jovita apps",
   "license": "MIT",

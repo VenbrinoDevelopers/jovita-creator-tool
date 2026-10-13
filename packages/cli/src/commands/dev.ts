@@ -5,7 +5,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { compileApp, runCli } from '@jovita/sdk';
+import { compileApp, runCli } from '@jovita-ai/sdk';
 import { loadSdkApp } from '../lib/sdk-project.js';
 
 export const devCommand = new Command('dev')

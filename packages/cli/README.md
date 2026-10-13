@@ -1,9 +1,9 @@
-# @jovita/cli
+# @jovita-ai/cli
 
 The `jov` command creates, tests, packages, and submits Jovita apps.
 
 ```sh
-npm install -g @jovita/cli
+npm install -g @jovita-ai/cli
 jov init my-app
 ```
 

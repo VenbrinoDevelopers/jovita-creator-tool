@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@jovita/sdk": "file:../../packages/sdk",
-    "@jovita/runtime": "file:../../packages/runtime",
+    "@jovita-ai/sdk": "file:../../packages/sdk",
+    "@jovita-ai/runtime": "file:../../packages/runtime",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@jovita/cli": "file:../../packages/cli",
+    "@jovita-ai/cli": "file:../../packages/cli",
     "typescript": "^5.9.3"
   },
   "scripts": {

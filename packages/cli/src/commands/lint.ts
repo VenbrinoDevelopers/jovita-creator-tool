@@ -2,9 +2,9 @@ import { Command } from 'commander';
 import { resolve } from 'node:path';
 import { discoverService } from '../lib/discover.js';
 import { readServiceConfig, validateManifest } from '../lib/manifest.js';
-import { compileApp } from '@jovita/sdk';
+import { compileApp } from '@jovita-ai/sdk';
 import { loadProjectDefinition, sdkProjectPath } from '../lib/sdk-project.js';
-import { isRuntimeApp } from '@jovita/sdk';
+import { isRuntimeApp } from '@jovita-ai/sdk';
 import type { ServiceConfig } from '../types.js';
 
 export const lintCommand = new Command('lint')

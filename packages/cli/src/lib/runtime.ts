@@ -58,18 +58,18 @@ export async function buildRuntimePayloadFromSource(
 
   // Package the public runtime with the signed miniapp so execution does not
   // depend on the creator machine's checkout or registry access.
-  const clientDependency = packageJson.dependencies?.['@jovita/runtime'];
+  const clientDependency = packageJson.dependencies?.['@jovita-ai/runtime'];
   if (typeof clientDependency === 'string' && clientDependency.startsWith('file:')) {
     const clientTarball = resolve(runtimePath, clientDependency.slice(5));
     const tarballName = basename(clientTarball);
-    if (!/^jovita-runtime-\d+\.\d+\.\d+\.tgz$/.test(tarballName) || !existsSync(clientTarball)) {
-      throw new Error('The local @jovita/runtime dependency must be a versioned runtime tarball');
+    if (!/^jovita(?:-ai)?-runtime-\d+\.\d+\.\d+\.tgz$/.test(tarballName) || !existsSync(clientTarball)) {
+      throw new Error('The local @jovita-ai/runtime dependency must be a versioned runtime tarball');
     }
     const packageRoot = resolve(appRoot, 'vendor');
     mkdirSync(packageRoot, { recursive: true });
     writeFileSync(resolve(packageRoot, tarballName), readFileSync(clientTarball));
     const stagedManifest = { ...packageJson, dependencies: { ...packageJson.dependencies,
-      '@jovita/runtime': `file:vendor/${tarballName}` } };
+      '@jovita-ai/runtime': `file:vendor/${tarballName}` } };
     writeFileSync(resolve(appRoot, 'package.json'), JSON.stringify(stagedManifest, null, 2));
   }
 

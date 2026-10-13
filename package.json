@@ -5,8 +5,8 @@
   "engines": { "node": ">=22.19.0" },
   "workspaces": ["packages/*"],
   "scripts": {
-    "build": "npm run build -w @jovita/runtime && npm run build -w @jovita/sdk && npm run build -w @jovita/cli",
+    "build": "npm run build -w @jovita-ai/runtime && npm run build -w @jovita-ai/sdk && npm run build -w @jovita-ai/cli",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck -w @jovita/sdk && npm run typecheck -w @jovita/cli"
+    "typecheck": "npm run typecheck -w @jovita-ai/sdk && npm run typecheck -w @jovita-ai/cli"
   }
 }

@@ -5,7 +5,7 @@ The public TypeScript SDK and `jov` CLI for building Jovita apps. The SDK descri
 ## A one-call API app
 
 ```ts
-import { defineApp, provider } from '@jovita/sdk';
+import { defineApp, provider } from '@jovita-ai/sdk';
 import { z } from 'zod';
 
 const search = provider({
@@ -36,7 +36,7 @@ export default defineApp({
 Requires Node.js 22.19 or newer. Install the CLI from npm. `jov init` adds the SDK and runtime to executable projects; skill-only projects do not need them.
 
 ```sh
-npm install -g @jovita/cli
+npm install -g @jovita-ai/cli
 jov init web-search
 cd web-search
 npm install
@@ -76,7 +76,7 @@ The SDK compiles both styles into the same manifest and `.jov` format. Existing 
 An existing command miniapp keeps its source and SDK declaration together under `runtime/`. Put `defineRuntimeApp({...})` in `runtime/jovita.app.ts`, next to its `runtime/src/` code. Larger apps can keep their operation grants in `runtime/operation-contracts.ts` and their storefront details in `runtime/release-metadata.ts`. The SDK supplies the standard broker protocol and skill path. Run `jov sync` to generate its compatibility `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. New apps should use `defineApp` and SDK `ctx.call()` directly.
 
 ```ts
-import { defineRuntimeApp } from '@jovita/sdk';
+import { defineRuntimeApp } from '@jovita-ai/sdk';
 import { operations } from './operation-contracts.js';
 
 export default defineRuntimeApp({
@@ -87,9 +87,9 @@ export default defineRuntimeApp({
 });
 ```
 
-An executable app cannot omit its operation grants: Jovita uses them to authorize and bill broker calls. A skill-only app has no command runtime or broker calls. Create one with `jov init my-skill --template skill`; it needs `skill/SKILL.md`, a small `jovita.service.json`, and the CLI for packaging, but it does not need `@jovita/sdk` or `@jovita/runtime`. Developers who prefer a typed declaration can use the optional `defineSkillApp({...})` helper.
+An executable app cannot omit its operation grants: Jovita uses them to authorize and bill broker calls. A skill-only app has no command runtime or broker calls. Create one with `jov init my-skill --template skill`; it needs `skill/SKILL.md`, a small `jovita.service.json`, and the CLI for packaging, but it does not need `@jovita-ai/sdk` or `@jovita-ai/runtime`. Developers who prefer a typed declaration can use the optional `defineSkillApp({...})` helper.
 
-The 17 retained first-party miniapps use this migration path in the Jovita SaaS repository. Their declarations are checked against the compatibility manifests, and their brokered runtimes use the public `@jovita/runtime` call client. Broker operation IDs, tool grants, commands, activity metadata, and buyer-facing release details are preserved during migration.
+The 17 retained first-party miniapps use this migration path in the Jovita SaaS repository. Their declarations are checked against the compatibility manifests, and their brokered runtimes use the public `@jovita-ai/runtime` call client. Broker operation IDs, tool grants, commands, activity metadata, and buyer-facing release details are preserved during migration.
 
 ## Repository layout
 
@@ -99,12 +99,12 @@ The 17 retained first-party miniapps use this migration path in the Jovita SaaS 
 - `examples/fluent-example`: direct API tool.
 - `examples/custom-example`: class-based workflow.
 
-The broker, creator credentials, buyer billing, and platform lifecycle services stay in Jovita's private server repositories. Existing published miniapps import `@jovita/runtime` directly; it is the same call transport that SDK apps use through `ctx.call()`.
+The broker, creator credentials, buyer billing, and platform lifecycle services stay in Jovita's private server repositories. Existing published miniapps import `@jovita-ai/runtime` directly; it is the same call transport that SDK apps use through `ctx.call()`.
 
 ## npm releases
 
-The three public packages are `@jovita/runtime`, `@jovita/sdk`, and `@jovita/cli`. Runtime is published first because the SDK depends on it; the SDK is published before the CLI. Package versions are immutable on npm. When changing the SDK or CLI version, update the CLI's exact SDK dependency too. `jov init` reads these versions from the CLI package so generated projects install the matching release.
+The three public packages are `@jovita-ai/runtime`, `@jovita-ai/sdk`, and `@jovita-ai/cli`. Runtime is published first because the SDK depends on it; the SDK is published before the CLI. Package versions are immutable on npm. When changing the SDK or CLI version, update the CLI's exact SDK dependency too. `jov init` reads these versions from the CLI package so generated projects install the matching release.
 
-The [publish workflow](.github/workflows/publish.yml) runs on tags named `npm-v<version>` that point to commits on `main`. The tag version must equal the SDK and CLI versions. Before tagging, run `npm ci && npm run build && npm run typecheck && npm test`, then review `npm pack --dry-run -w @jovita/runtime`, `npm pack --dry-run -w @jovita/sdk`, and `npm pack --dry-run -w @jovita/cli`. Push the release commit, then create and push the tag, for example `git tag npm-v0.1.4 && git push origin npm-v0.1.4`. The workflow skips any package version already published, which allows a partial release to resume in dependency order.
+The [publish workflow](.github/workflows/publish.yml) runs on tags named `npm-v<version>` that point to commits on `main`. The tag version must equal the SDK and CLI versions. Before tagging, run `npm ci && npm run build && npm run typecheck && npm test`, then review `npm pack --dry-run -w @jovita-ai/runtime`, `npm pack --dry-run -w @jovita-ai/sdk`, and `npm pack --dry-run -w @jovita-ai/cli`. Push the release commit, then create and push the tag, for example `git tag npm-v0.1.4 && git push origin npm-v0.1.4`. The workflow skips any package version already published, which allows a partial release to resume in dependency order.
 
-Publishing uses npm trusted publishing with GitHub Actions OIDC. Each package must have a trusted publisher configured on npm: GitHub owner `VenbrinoDevelopers`, repository `jovita-creator-tool`, workflow filename `publish.yml`, and direct `npm publish` permission. No npm token is stored in GitHub. The initial version of a new package must be published by an npm organization owner before its trusted publisher can be configured.
+Publishing uses npm trusted publishing with GitHub Actions OIDC. Each package must have a trusted publisher configured on npm: GitHub owner `VenbrinoDevelopers`, repository `jovita-creator-tool`, workflow filename `publish.yml`, and direct `npm publish` permission. No npm token is stored in GitHub. The initial version of a new package must be published by its owning npm account before its trusted publisher can be configured.

@@ -1,1 +1,1 @@
-export * from '@jovita/runtime';
+export * from '@jovita-ai/runtime';

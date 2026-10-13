@@ -45,7 +45,7 @@ export const initCommand = new Command('init')
   });
 }`;
     const appSource = options.template === 'api'
-      ? `import { defineApp, provider } from '@jovita/sdk';
+      ? `import { defineApp, provider } from '@jovita-ai/sdk';
 import { z } from 'zod';
 
 const example = provider({
@@ -65,7 +65,7 @@ export default defineApp({
   },
 });
 `
-      : `import { JovitaApp, JovitaProvider, JovitaTool, ToolContext } from '@jovita/sdk';
+      : `import { JovitaApp, JovitaProvider, JovitaTool, ToolContext } from '@jovita-ai/sdk';
 import { z } from 'zod';
 
 ${provider}
@@ -99,11 +99,11 @@ export default class ${id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()
     writeFileSync(resolve(root, 'package.json'), JSON.stringify({
       name: id, version: '0.1.0', private: true, type: 'module',
       dependencies: {
-        '@jovita/sdk': cliPackage.dependencies['@jovita/sdk'],
+        '@jovita-ai/sdk': cliPackage.dependencies['@jovita-ai/sdk'],
         zod: '^4.1.12',
       },
       devDependencies: {
-        '@jovita/cli': cliPackage.version,
+        '@jovita-ai/cli': cliPackage.version,
         typescript: '^5.9.3',
       },
       scripts: { dev: `jov dev ${options.template === 'api' ? 'search' : 'lookup'} --input '{"query":"hello"}'`, build: 'jov build --target linux-amd64' },

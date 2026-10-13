@@ -1,1 +1,1 @@
-export * from '@jovita/sdk';
+export * from '@jovita-ai/sdk';

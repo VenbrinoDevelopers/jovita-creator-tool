@@ -1,4 +1,4 @@
-import { JovitaApp, JovitaProvider, JovitaTool, ToolContext } from '@jovita/sdk';
+import { JovitaApp, JovitaProvider, JovitaTool, ToolContext } from '@jovita-ai/sdk';
 import { z } from 'zod';
 
 class ExampleProvider extends JovitaProvider {

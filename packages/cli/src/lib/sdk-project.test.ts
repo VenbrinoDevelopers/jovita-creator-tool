@@ -12,7 +12,7 @@ test('an existing runtime has one SDK source and an explicitly synced compatibil
   try {
     mkdirSync(join(root, 'runtime'));
     writeFileSync(join(root, 'runtime/package.json'), '{"name":"test-app","version":"1.0.0","type":"module"}');
-    writeFileSync(join(root, 'runtime/jovita.app.ts'), `import { defineRuntimeApp } from '@jovita/sdk';
+    writeFileSync(join(root, 'runtime/jovita.app.ts'), `import { defineRuntimeApp } from '@jovita-ai/sdk';
 export default defineRuntimeApp({
   id: 'test-app', name: 'Test App', version: '1.0.0', category: 'productivity', activityProtocolVersion: 1,
   description: 'An existing command runtime',
