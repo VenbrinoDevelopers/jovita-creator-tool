@@ -6,7 +6,7 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "build": "npm run build -w @jovita-ai/runtime && npm run build -w @jovita-ai/sdk && npm run build -w @jovita-ai/cli",
-    "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck -w @jovita-ai/sdk && npm run typecheck -w @jovita-ai/cli"
+    "test": "npm run build && npm run test --workspaces --if-present",
+    "typecheck": "npm run build -w @jovita-ai/sdk && npm run typecheck -w @jovita-ai/sdk && npm run typecheck -w @jovita-ai/cli"
   }
 }
