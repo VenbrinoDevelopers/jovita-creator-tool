@@ -1,7 +1,8 @@
 import type { JovitaApp } from './app.js';
 import { schemaJson } from './schema.js';
+import type { ServiceConfig } from './contracts.js';
 
-export function compileApp(app: JovitaApp): Record<string, unknown> {
+export function compileApp(app: JovitaApp): ServiceConfig {
   const providers = app.providers();
   const tools = app.tools();
   const providerIds = new Set<string>();
@@ -49,7 +50,7 @@ export function compileApp(app: JovitaApp): Record<string, unknown> {
     }
   }
   return {
-    ...app.config, compat: { minRuntimeVersion: '0.1.0' }, activityProtocolVersion: 1, providers: [],
+    ...app.config, compat: { minRuntimeVersion: '0.1.0', ...app.config.compat }, activityProtocolVersion: 1, providers: [],
     ...(providerRows.length ? { broker: { providers: providerRows } } : {}),
     skill: { entry: 'SKILL.md', assets: ['.'] },
     runtime: { execute: { command: app.config.id, mode: 'brokered', protocolVersion: 1,

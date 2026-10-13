@@ -1,12 +1,13 @@
 import { JovitaProvider, type ProviderOptions, type ApiOperation } from './provider.js';
 import { ApiTool, type ToolOptions, type JovitaTool } from './tool.js';
 import type { Schema } from './schema.js';
+import type { ServicePresentation } from './contracts.js';
 
 export interface AppOptions {
   id: string; name: string; version: string; category: string; description: string;
   logoUrl?: string;
-  presentation?: { details: string; inputDescription: string; outputDescription: string;
-    highlights: [string, string, string]; featuredPrompt: string; examplePrompts?: string[] };
+  presentation?: Omit<ServicePresentation, 'highlights'> & { highlights: [string, string, string] };
+  compat?: { minRuntimeVersion?: string; serviceAliases?: string[]; executableAliases?: string[] };
 }
 
 export class JovitaApp {

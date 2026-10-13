@@ -81,8 +81,8 @@ export default class ${id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()
     writeFileSync(resolve(root, 'src/jovita.app.ts'), appSource);
     writeFileSync(resolve(root, 'package.json'), JSON.stringify({
       name: id, version: '0.1.0', private: true, type: 'module',
-      dependencies: { '@jovita/sdk': '^0.1.0', zod: '^4.1.12' },
-      devDependencies: { '@jovita/cli': '^0.1.0', typescript: '^5.9.3' },
+      dependencies: { '@jovita/sdk': '^0.1.1', zod: '^4.1.12' },
+      devDependencies: { '@jovita/cli': '^0.1.1', typescript: '^5.9.3' },
       scripts: { dev: `jov dev ${options.template === 'api' ? 'search' : 'lookup'} --input '{"query":"hello"}'`, build: 'jov build --target linux-amd64' },
     }, null, 2) + '\n');
     writeFileSync(resolve(root, 'tsconfig.json'), JSON.stringify({

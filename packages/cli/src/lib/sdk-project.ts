@@ -1,44 +1,69 @@
-import { existsSync, mkdirSync, cpSync, writeFileSync, chmodSync } from 'node:fs';
+import { existsSync, mkdirSync, cpSync, writeFileSync, chmodSync, readFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 import { build } from 'esbuild';
 import { tsImport } from 'tsx/esm/api';
-import { JovitaApp, compileApp } from '@jovita/sdk';
+import { JovitaApp, RuntimeApp, compileApp, isRuntimeApp } from '@jovita/sdk';
+import type { ServiceConfig } from '@jovita/sdk';
 
 export function sdkProjectPath(root: string): string | undefined {
   const candidates = [resolve(root, 'src/jovita.app.ts'), resolve(root, 'src/jovita.app.js'),
     resolve(root, 'jovita.app.ts'), resolve(root, 'jovita.app.js')];
-  const manifest = resolve(root, 'jovita.service.json');
   const sources = candidates.filter(existsSync);
   if (sources.length > 1) throw new Error('Found multiple app entry points. Keep one jovita.app.ts or jovita.app.js.');
   const source = sources[0];
-  if (source && existsSync(manifest)) {
-    throw new Error('Both an SDK app and jovita.service.json are present. Keep one authoring source.');
-  }
   return source;
 }
 
-export async function loadSdkApp(root: string): Promise<JovitaApp> {
+export async function loadProjectDefinition(root: string, options: { allowManifestDrift?: boolean } = {}): Promise<JovitaApp | RuntimeApp> {
   const path = sdkProjectPath(root);
   if (!path) throw new Error(`No src/jovita.app.ts or legacy root app entry in ${root}`);
-  const module = await tsImport(path, import.meta.url) as { default?: JovitaApp | (new () => JovitaApp) };
+  const module = await tsImport(path, import.meta.url) as { default?: JovitaApp | RuntimeApp | (new () => JovitaApp) };
   if (!module.default) throw new Error('The app entry must default-export defineApp(...) or an app class');
   const app = typeof module.default === 'function' ? new module.default() : module.default;
+  if (isRuntimeApp(app)) {
+    const manifest = app.manifest;
+    if (!manifest || typeof manifest.id !== 'string' || !manifest.runtime?.execute) {
+      throw new Error('defineRuntimeApp requires a complete executable service declaration');
+    }
+    const checkedIn = resolve(root, 'jovita.service.json');
+    if (!options.allowManifestDrift && !existsSync(checkedIn)) throw new Error('Existing runtime apps need the matching jovita.service.json during migration');
+    const saved = existsSync(checkedIn) ? JSON.parse(readFileSync(checkedIn, 'utf8')) as ServiceConfig : undefined;
+    if (!options.allowManifestDrift && !isDeepStrictEqual(saved, manifest)) {
+      throw new Error('SDK declaration and jovita.service.json differ. Regenerate the compatibility manifest before building.');
+    }
+    return app;
+  }
   if (!app || typeof app.providers !== 'function' || typeof app.tools !== 'function'
     || typeof app.config?.id !== 'string') {
     throw new Error('Default export must extend JovitaApp');
   }
+  if (existsSync(resolve(root, 'jovita.service.json'))) {
+    throw new Error('Both an SDK app and jovita.service.json are present. Keep one authoring source.');
+  }
   return app;
 }
 
-export interface PreparedSdkProject { root: string; app: JovitaApp; cleanup(): Promise<void> }
+export async function loadSdkApp(root: string): Promise<JovitaApp> {
+  const app = await loadProjectDefinition(root);
+  if (isRuntimeApp(app)) {
+    throw new Error('This app uses its existing command runtime. Run that runtime locally; jov build and jov verify support its SDK declaration.');
+  }
+  return app;
+}
+
+export interface PreparedSdkProject { root: string; app: JovitaApp | RuntimeApp; cleanup(): Promise<void> }
 
 export async function prepareSdkProject(projectRoot: string): Promise<PreparedSdkProject> {
   const source = sdkProjectPath(projectRoot);
   if (!source) throw new Error(`No SDK app in ${projectRoot}`);
-  const app = await loadSdkApp(projectRoot);
+  const app = await loadProjectDefinition(projectRoot);
+  if (isRuntimeApp(app)) {
+    return { root: projectRoot, app, cleanup: async () => {} };
+  }
   const manifest = compileApp(app);
   const root = await mkdtemp(join(tmpdir(), `jov-sdk-${app.config.id}-`));
   try {

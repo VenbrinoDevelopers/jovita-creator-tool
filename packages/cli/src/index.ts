@@ -9,10 +9,11 @@ import { devCommand } from './commands/dev.js';
 import { connectCommand } from './commands/connect.js';
 import { submitCommand } from './commands/submit.js';
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/login.js';
+import { syncCommand } from './commands/sync.js';
 
 const program = new Command();
 
-program.name('jov').description('Build, test, and submit Jovita apps').version('0.1.0');
+program.name('jov').description('Build, test, and submit Jovita apps').version('0.1.1');
 
 program.addCommand(buildCommand);
 program.addCommand(verifyCommand);
@@ -25,5 +26,6 @@ program.addCommand(submitCommand);
 program.addCommand(loginCommand);
 program.addCommand(logoutCommand);
 program.addCommand(whoamiCommand);
+program.addCommand(syncCommand);
 
 await program.parseAsync();

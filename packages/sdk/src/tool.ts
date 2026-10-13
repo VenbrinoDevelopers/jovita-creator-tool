@@ -1,6 +1,7 @@
 import { capabilityContext, invokeCapability, stableCallId } from '@jovita/runtime';
 import { validateValue, type Schema, type InputOf, type OutputOf } from './schema.js';
 import { ApiOperation } from './provider.js';
+import type { JovitaActivitySpecV1 } from './contracts.js';
 
 export interface ToolOptions<I extends Schema = Schema, O extends Schema = Schema> {
   id: string;
@@ -8,7 +9,7 @@ export interface ToolOptions<I extends Schema = Schema, O extends Schema = Schem
   input: I;
   output: O;
   uses?: Array<{ operation: ApiOperation | string; maxCalls?: number }>;
-  activity: { kind: 'build' | 'generate' | 'check' | 'test' | 'search' | 'list' | 'read' | 'write' | 'prepare' | 'publish' | 'send' | 'run'; object: string; icon?: 'build' | 'check' | 'test' | 'search' | 'folder' | 'document' | 'publish' | 'send' | 'command' };
+  activity: JovitaActivitySpecV1;
   destructive?: boolean;
 }
 

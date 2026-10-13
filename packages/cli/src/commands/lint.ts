@@ -3,7 +3,8 @@ import { resolve } from 'node:path';
 import { discoverService } from '../lib/discover.js';
 import { readServiceConfig, validateManifest } from '../lib/manifest.js';
 import { compileApp } from '@jovita/sdk';
-import { loadSdkApp, sdkProjectPath } from '../lib/sdk-project.js';
+import { loadProjectDefinition, sdkProjectPath } from '../lib/sdk-project.js';
+import { isRuntimeApp } from '@jovita/sdk';
 import type { ServiceConfig } from '../types.js';
 
 export const lintCommand = new Command('lint')
@@ -17,8 +18,9 @@ export const lintCommand = new Command('lint')
     const info: string[] = [];
 
     try {
-      const config = sdkProjectPath(root)
-        ? compileApp(await loadSdkApp(root)) as unknown as ServiceConfig
+      const definition = sdkProjectPath(root) ? await loadProjectDefinition(root) : undefined;
+      const config = definition
+        ? isRuntimeApp(definition) ? definition.serviceConfig() : compileApp(definition)
         : readServiceConfig(manifestPath);
       const validation = validateManifest(config);
 

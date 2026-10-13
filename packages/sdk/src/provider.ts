@@ -25,7 +25,10 @@ export interface ApiOperationOptions<I extends Schema, O extends Schema> {
   output: O;
   creditsPerCall: number;
   providerCostNote?: string;
-  executionKind?: 'http-json' | 'http-multipart' | 'http-binary' | 'http-sse' | 'http-poll';
+  executionKind?: 'http-json' | 'http-multipart' | 'http-binary' | 'http-sse' | 'http-poll' | 'named-run';
+  /** Only for the broker's reviewed Monid named-run route. */
+  providerName?: string;
+  endpoint?: string;
   requestMapping?: { body: Record<string, { from: string } | { const: string | number | boolean }> };
   responseField?: string;
   queryFields?: string[];

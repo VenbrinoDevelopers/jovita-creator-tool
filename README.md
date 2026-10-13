@@ -67,7 +67,13 @@ The server imports the public declaration and requests host approval. If approva
 
 Use `jov init my-app --template custom` when a tool needs branching, several providers, or a long-running workflow. A `JovitaTool` class implements `run(ctx, input)` and lists each allowed operation with its maximum call count. `ctx.call()` provides stable call IDs, delivery acknowledgment, and recovery through the SDK runtime client. You can split providers, tools, and app registration across files; `src/jovita.app.ts` is the single authoring entry point. See [the custom example](examples/custom-example/src/jovita.app.ts).
 
-The SDK compiles both styles into the same manifest and `.jov` format. Existing hand-written `jovita.service.json` projects remain supported, but a project must use one authoring source.
+The SDK compiles both styles into the same manifest and `.jov` format. Existing hand-written `jovita.service.json` projects remain supported. Keep one authoring source for each project.
+
+## Existing command miniapps
+
+An existing miniapp can adopt SDK-typed declarations without rewriting its command runtime first. Put `defineRuntimeApp({...})` in `src/jovita.app.ts`, use the exported `BrokerOperation`, `ServiceConfig`, and other contract types, and keep the existing runtime under `runtime/`. Run `jov sync` to generate its compatibility `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. The compatibility file lets older release tooling and deployed app versions continue to read the same contract. New apps should use `defineApp` and SDK `ctx.call()` directly.
+
+The 17 retained first-party miniapps use this migration path in the Jovita SaaS repository. Their declarations are checked against the compatibility manifests, and their brokered runtimes use the public `@jovita/runtime` call client. Broker operation IDs, tool grants, commands, activity metadata, and buyer-facing release details are preserved during migration.
 
 ## Repository layout
 

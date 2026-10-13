@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
-import { defineApp, provider, compileApp, JovitaApp, JovitaTool } from '../dist/index.js';
+import { defineApp, provider, compileApp, defineRuntimeApp, JovitaApp, JovitaTool } from '../dist/index.js';
 
 test('one route compiles to one priced operation and one limited tool grant', () => {
   const search = provider({ name: 'Search API', baseUrl: 'https://api.example.com', auth: 'bearer' });
@@ -51,4 +51,34 @@ test('reused provider keeps one connection profile and separate prices', () => {
   const manifest = compileApp(app);
   assert.equal(manifest.broker.providers.length, 1);
   assert.deepEqual(manifest.broker.providers[0].operations.map(item => item.buyerCredits), [5, 20]);
+});
+
+test('named runs and activity phases preserve the broker and AI contracts', () => {
+  const monid = provider({ name: 'Monid', baseUrl: 'https://api.monid.ai/v1/', auth: 'bearer' });
+  const app = defineApp({ id: 'lead-finder', name: 'Lead Finder', version: '1.0.0',
+    compat: { serviceAliases: ['emailfinder'], executableAliases: ['emailfinder'] },
+    tools: {
+      search: monid.post('/run', { description: 'Find qualified leads',
+        executionKind: 'named-run', providerName: 'sample', endpoint: '/search',
+        input: z.object({ query: z.string() }), output: z.object({ leads: z.array(z.string()) }),
+        creditsPerCall: 20,
+        activity: { kind: 'search', object: 'leads', icon: 'search',
+          phases: { collecting: { kind: 'read', object: 'sources' } } },
+      }),
+    },
+  });
+  const manifest = compileApp(app);
+  assert.equal(manifest.compat.serviceAliases[0], 'emailfinder');
+  assert.equal(manifest.broker.providers[0].operations[0].executionKind, 'named-run');
+  assert.equal(manifest.broker.providers[0].operations[0].providerName, 'sample');
+  assert.equal(manifest.runtime.execute.operations[1].activity.phases.collecting.kind, 'read');
+});
+
+test('existing command runtimes retain their complete typed release declaration', () => {
+  const manifest = { id: 'existing', name: 'Existing', version: '1.0.0',
+    category: 'productivity', description: 'Existing command runtime', providers: [],
+    skill: { entry: 'SKILL.md', assets: ['.'] }, runtime: { execute: { command: 'existing',
+      mode: 'brokered', protocolVersion: 1, operations: [{ id: 'health', argvPrefix: ['health'],
+        capabilities: [], billingRequired: false, activity: { kind: 'check', object: 'health' } }] } } };
+  assert.equal(defineRuntimeApp(manifest).manifest, manifest);
 });

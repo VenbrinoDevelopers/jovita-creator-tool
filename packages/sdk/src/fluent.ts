@@ -2,6 +2,7 @@ import { JovitaApp, type AppOptions } from './app.js';
 import { JovitaProvider, type ApiOperationOptions, type ProviderOptions } from './provider.js';
 import { ApiTool } from './tool.js';
 import type { Schema } from './schema.js';
+import type { JovitaActivitySpecV1 } from './contracts.js';
 
 export interface ProviderShortcutOptions extends Omit<ProviderOptions, 'id' | 'authMethod'> {
   id?: string;
@@ -10,7 +11,8 @@ export interface ProviderShortcutOptions extends Omit<ProviderOptions, 'id' | 'a
 }
 
 type RouteOptions<I extends Schema, O extends Schema> = Omit<ApiOperationOptions<I, O>,
-  'id' | 'name' | 'purpose' | 'method' | 'path'> & { description: string; name?: string };
+  'id' | 'name' | 'purpose' | 'method' | 'path'> & { description: string; name?: string;
+    activity?: JovitaActivitySpecV1; destructive?: boolean };
 
 export class ApiToolSpec<I extends Schema, O extends Schema> {
   constructor(readonly provider: ProviderBuilder, readonly method: ApiOperationOptions<I, O>['method'],
@@ -58,10 +60,10 @@ export function defineApp(options: Pick<AppOptions, 'id' | 'name' | 'version'>
       instance = new JovitaProvider(spec.provider.config);
       providers.set(spec.provider, instance);
     }
-    const { description, name, ...route } = spec.options;
+    const { description, name, activity, destructive, ...route } = spec.options;
     const operation = instance.operation({ ...route, id, name: name ?? id, purpose: description,
       method: spec.method, path: spec.path });
-    tools.push(new ApiTool(operation, { id, description }));
+    tools.push(new ApiTool(operation, { id, description, activity, destructive }));
   }
   const metadata: AppOptions = { ...options, category: options.category ?? 'productivity',
     description: options.description ?? `Tools provided by ${options.name}.` };
