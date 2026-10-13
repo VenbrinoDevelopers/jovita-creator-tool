@@ -42,7 +42,9 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Verify executable CLI entry
-        run: node -e "const fs = require('node:fs'); const path = 'packages/cli/dist/index.js'; if (!(fs.statSync(path).mode & 0o111)) throw new Error(path + ' must be executable')"
+        run: |
+          node -e "const fs = require('node:fs'); const path = 'packages/cli/dist/index.js'; if (!(fs.statSync(path).mode & 0o111)) throw new Error(path + ' must be executable')"
+          test "$(node packages/cli/dist/index.js --version)" = "$(node -p "require('./packages/cli/package.json').version")"
       - run: npm run typecheck
       - run: npm test
       - name: Publish runtime, SDK, then CLI

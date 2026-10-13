@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { readFileSync } from 'node:fs';
 import { buildCommand } from './commands/build.js';
 import { verifyCommand } from './commands/verify.js';
 import { initCommand } from './commands/init.js';
@@ -13,7 +14,8 @@ import { syncCommand } from './commands/sync.js';
 
 const program = new Command();
 
-program.name('jov').description('Build, test, and submit Jovita apps').version('0.1.3');
+const packageVersion = (JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }).version;
+program.name('jov').description('Build, test, and submit Jovita apps').version(packageVersion);
 
 program.addCommand(buildCommand);
 program.addCommand(verifyCommand);

@@ -1,6 +1,6 @@
 {
   "name": "@jovita-ai/cli",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Create, test, build, and submit Jovita apps",
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/VenbrinoDevelopers/jovita-creator-tool.git", "directory": "packages/cli" },
