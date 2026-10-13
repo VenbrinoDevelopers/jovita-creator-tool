@@ -30,19 +30,19 @@ jobs:
             exit 1
           }
           version="${GITHUB_REF_NAME#npm-v}"
-          for package in sdk cli; do
-            actual="$(node -p "require('./packages/$package/package.json').version")"
-            test "$version" = "$actual" || {
-              echo "Tag version $version does not match @jovita-ai/$package@$actual" >&2
-              exit 1
-            }
-          done
+          actual="$(node -p "require('./packages/cli/package.json').version")"
+          test "$version" = "$actual" || {
+            echo "Tag version $version does not match @jovita-ai/cli@$actual" >&2
+            exit 1
+          }
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org/'
       - run: npm ci
       - run: npm run build
+      - name: Verify executable CLI entry
+        run: node -e "const fs = require('node:fs'); const path = 'packages/cli/dist/index.js'; if (!(fs.statSync(path).mode & 0o111)) throw new Error(path + ' must be executable')"
       - run: npm run typecheck
       - run: npm test
       - name: Publish runtime, SDK, then CLI

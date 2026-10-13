@@ -1,6 +1,6 @@
 {
   "name": "@jovita-ai/cli",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Create, test, build, and submit Jovita apps",
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/VenbrinoDevelopers/jovita-creator-tool.git", "directory": "packages/cli" },
@@ -10,7 +10,7 @@
   "bin": { "jov": "./dist/index.js" },
   "files": ["dist"],
   "scripts": {
-    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json && node -e \"require('node:fs').chmodSync('dist/index.js', 0o755)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test src/lib/{manifest,runtime,artifacts,bundle-size,creator-api,sdk-project}.test.ts"
   },
