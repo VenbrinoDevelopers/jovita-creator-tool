@@ -1,6 +1,6 @@
 {
   "name": "@jovita/cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "engines": { "node": ">=22.19.0" },
   "bin": { "jov": "./dist/index.js" },
@@ -11,7 +11,7 @@
     "test": "tsx --test src/lib/{manifest,runtime,artifacts,bundle-size,creator-api,sdk-project}.test.ts"
   },
   "dependencies": {
-    "@jovita/sdk": "0.1.1",
+    "@jovita/sdk": "0.1.2",
     "commander": "^14.0.3",
     "esbuild": "^0.25.0",
     "jszip": "^3.10.1",

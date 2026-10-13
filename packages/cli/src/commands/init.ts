@@ -3,20 +3,32 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 export const initCommand = new Command('init')
-  .description('Create a Jovita API tool or custom app')
+  .description('Create a Jovita skill, API tool, or custom app')
   .argument('<name>', 'App directory name')
-  .option('--template <kind>', 'api or custom', 'api')
+  .option('--template <kind>', 'skill, api, or custom', 'api')
   .option('--dir <path>', 'Parent directory', '.')
   .action((name: string, options) => {
-    if (options.template !== 'api' && options.template !== 'custom') throw new Error('Choose --template api or custom');
+    if (options.template !== 'skill' && options.template !== 'api' && options.template !== 'custom') throw new Error('Choose --template skill, api, or custom');
     const id = name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '');
     if (!/^[a-z][a-z0-9-]{1,31}$/.test(id)) throw new Error('Use a name with 2 to 32 lowercase letters, numbers, or hyphens');
     const root = resolve(options.dir, name);
     if (existsSync(root)) throw new Error(`Directory already exists: ${root}`);
     mkdirSync(resolve(root, 'skill'), { recursive: true });
+    const display = name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    if (options.template === 'skill') {
+      writeFileSync(resolve(root, 'jovita.service.json'), JSON.stringify({
+        id, name: display, version: '0.1.0', category: 'productivity',
+        description: `A skill that helps with ${display.toLowerCase()}.`,
+        skill: { entry: 'skill/SKILL.md', assets: ['skill/SKILL.md'] },
+      }, null, 2) + '\n');
+      writeFileSync(resolve(root, 'skill/SKILL.md'), `# ${display}\n\nDescribe when and how Jovita should use this skill.\n`);
+      writeFileSync(resolve(root, '.gitignore'), 'build/\n.env\n');
+      console.log(JSON.stringify({ ok: true, root, template: 'skill',
+        next: [`cd ${root}`, 'jov lint', 'jov build', 'jov verify build/*.jov'] }, null, 2));
+      return;
+    }
     mkdirSync(resolve(root, 'fixtures'), { recursive: true });
     mkdirSync(resolve(root, 'src'), { recursive: true });
-    const display = name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const provider = `class ExampleProvider extends JovitaProvider {
   constructor() {
     super({ id: 'example_api', name: 'Example API', summary: 'Example JSON endpoint',
@@ -81,8 +93,15 @@ export default class ${id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()
     writeFileSync(resolve(root, 'src/jovita.app.ts'), appSource);
     writeFileSync(resolve(root, 'package.json'), JSON.stringify({
       name: id, version: '0.1.0', private: true, type: 'module',
-      dependencies: { '@jovita/sdk': '^0.1.1', zod: '^4.1.12' },
-      devDependencies: { '@jovita/cli': '^0.1.1', typescript: '^5.9.3' },
+      dependencies: {
+        '@jovita/runtime': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-runtime-0.1.0.tgz',
+        '@jovita/sdk': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-sdk-0.1.2.tgz',
+        zod: '^4.1.12',
+      },
+      devDependencies: {
+        '@jovita/cli': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-cli-0.1.2.tgz',
+        typescript: '^5.9.3',
+      },
       scripts: { dev: `jov dev ${options.template === 'api' ? 'search' : 'lookup'} --input '{"query":"hello"}'`, build: 'jov build --target linux-amd64' },
     }, null, 2) + '\n');
     writeFileSync(resolve(root, 'tsconfig.json'), JSON.stringify({

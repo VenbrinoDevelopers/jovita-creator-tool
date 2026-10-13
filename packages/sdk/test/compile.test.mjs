@@ -80,5 +80,24 @@ test('existing command runtimes retain their complete typed release declaration'
     skill: { entry: 'SKILL.md', assets: ['.'] }, runtime: { execute: { command: 'existing',
       mode: 'brokered', protocolVersion: 1, operations: [{ id: 'health', argvPrefix: ['health'],
         capabilities: [], billingRequired: false, activity: { kind: 'check', object: 'health' } }] } } };
-  assert.equal(defineRuntimeApp(manifest).manifest, manifest);
+  assert.deepEqual(defineRuntimeApp(manifest).manifest, manifest);
+});
+
+test('compact command declarations supply broker protocol defaults', () => {
+  const app = defineRuntimeApp({ id: 'existing', name: 'Existing', version: '1.0.0',
+    description: 'Existing command runtime', operations: [{ id: 'health', argvPrefix: ['health'],
+      capabilities: [], billingRequired: false, activity: { kind: 'check', object: 'health' } }],
+    healthCheck: { command: 'existing', args: ['health'], operationId: 'health' } });
+  assert.equal(app.manifest.runtime.execute.command, 'existing');
+  assert.equal(app.manifest.runtime.execute.mode, 'brokered');
+  assert.equal(app.manifest.activityProtocolVersion, 1);
+  assert.equal(app.manifest.skill.entry, 'skill/SKILL.md');
+  assert.equal(app.manifest.providers.length, 0);
+});
+
+test('metadata-only declarations produce skill-only apps without a runtime', () => {
+  const app = defineRuntimeApp({ id: 'writing-skill', name: 'Writing Skill', version: '1.0.0',
+    description: 'Help draft short messages.' });
+  assert.equal(app.manifest.runtime, undefined);
+  assert.equal(app.manifest.skill.entry, 'skill/SKILL.md');
 });

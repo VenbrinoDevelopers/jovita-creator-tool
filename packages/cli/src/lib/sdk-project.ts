@@ -10,7 +10,8 @@ import { JovitaApp, RuntimeApp, compileApp, isRuntimeApp } from '@jovita/sdk';
 import type { ServiceConfig } from '@jovita/sdk';
 
 export function sdkProjectPath(root: string): string | undefined {
-  const candidates = [resolve(root, 'src/jovita.app.ts'), resolve(root, 'src/jovita.app.js'),
+  const candidates = [resolve(root, 'runtime/jovita.app.ts'), resolve(root, 'runtime/jovita.app.js'),
+    resolve(root, 'src/jovita.app.ts'), resolve(root, 'src/jovita.app.js'),
     resolve(root, 'jovita.app.ts'), resolve(root, 'jovita.app.js')];
   const sources = candidates.filter(existsSync);
   if (sources.length > 1) throw new Error('Found multiple app entry points. Keep one jovita.app.ts or jovita.app.js.');
@@ -20,14 +21,17 @@ export function sdkProjectPath(root: string): string | undefined {
 
 export async function loadProjectDefinition(root: string, options: { allowManifestDrift?: boolean } = {}): Promise<JovitaApp | RuntimeApp> {
   const path = sdkProjectPath(root);
-  if (!path) throw new Error(`No src/jovita.app.ts or legacy root app entry in ${root}`);
+  if (!path) throw new Error(`No runtime/jovita.app.ts, src/jovita.app.ts, or root app entry in ${root}`);
   const module = await tsImport(path, import.meta.url) as { default?: JovitaApp | RuntimeApp | (new () => JovitaApp) };
   if (!module.default) throw new Error('The app entry must default-export defineApp(...) or an app class');
   const app = typeof module.default === 'function' ? new module.default() : module.default;
   if (isRuntimeApp(app)) {
     const manifest = app.manifest;
-    if (!manifest || typeof manifest.id !== 'string' || !manifest.runtime?.execute) {
-      throw new Error('defineRuntimeApp requires a complete executable service declaration');
+    if (!manifest || typeof manifest.id !== 'string') {
+      throw new Error('defineRuntimeApp requires an app id');
+    }
+    if (existsSync(resolve(root, 'runtime/package.json')) && !manifest.runtime?.execute) {
+      throw new Error('Executable apps must declare their operations in defineRuntimeApp');
     }
     const checkedIn = resolve(root, 'jovita.service.json');
     if (!options.allowManifestDrift && !existsSync(checkedIn)) throw new Error('Existing runtime apps need the matching jovita.service.json during migration');

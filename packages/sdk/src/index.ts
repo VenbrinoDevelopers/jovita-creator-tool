@@ -10,4 +10,4 @@ export type { Schema, InputOf, OutputOf } from './schema.js';
 export { defineApp, provider, ProviderBuilder, ApiToolSpec } from './fluent.js';
 export * from './contracts.js';
 export { RuntimeApp, defineRuntimeApp, isRuntimeApp } from './runtime-app.js';
-export type { RuntimeAppDeclaration } from './runtime-app.js';
+export type { RuntimeAppDeclaration, RuntimeAppOptions } from './runtime-app.js';
