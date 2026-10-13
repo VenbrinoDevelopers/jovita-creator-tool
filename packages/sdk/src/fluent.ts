@@ -3,6 +3,7 @@ import { JovitaProvider, type ApiOperationOptions, type ProviderOptions } from '
 import { ApiTool } from './tool.js';
 import type { Schema } from './schema.js';
 import type { JovitaActivitySpecV1 } from './contracts.js';
+import { CommandApp, type CommandAppOptions, CommandToolSpec } from './command-app.js';
 
 export interface ProviderShortcutOptions extends Omit<ProviderOptions, 'id' | 'authMethod'> {
   id?: string;
@@ -48,9 +49,19 @@ export function provider(options: ProviderShortcutOptions): ProviderBuilder {
   return new ProviderBuilder(options);
 }
 
+export function defineApp(options: CommandAppOptions): CommandApp;
 export function defineApp(options: Pick<AppOptions, 'id' | 'name' | 'version'>
   & Partial<Omit<AppOptions, 'id' | 'name' | 'version'>>
-  & { tools: Record<string, ApiToolSpec<Schema, Schema>> }): JovitaApp {
+  & { tools: Record<string, ApiToolSpec<Schema, Schema>> }): JovitaApp;
+export function defineApp(options: (Pick<AppOptions, 'id' | 'name' | 'version'>
+  & Partial<Omit<AppOptions, 'id' | 'name' | 'version'>>
+  & { tools: Record<string, ApiToolSpec<Schema, Schema>> }) | CommandAppOptions): JovitaApp {
+  if (Object.values(options.tools).some(spec => spec instanceof CommandToolSpec)) {
+    return new CommandApp(options as CommandAppOptions);
+  }
+  if ('command' in options || 'healthCheck' in options || 'runtimeBuild' in options) {
+    throw new Error('Command apps must declare tools with commandTool or commandTools');
+  }
   const providers = new Map<ProviderBuilder, JovitaProvider>();
   const tools: ApiTool<Schema, Schema>[] = [];
   for (const [id, spec] of Object.entries(options.tools)) {
@@ -65,8 +76,9 @@ export function defineApp(options: Pick<AppOptions, 'id' | 'name' | 'version'>
       method: spec.method, path: spec.path });
     tools.push(new ApiTool(operation, { id, description, activity, destructive }));
   }
-  const metadata: AppOptions = { ...options, category: options.category ?? 'productivity',
-    description: options.description ?? `Tools provided by ${options.name}.` };
+  const direct = options as Pick<AppOptions, 'id' | 'name' | 'version'> & Partial<Omit<AppOptions, 'id' | 'name' | 'version'>>;
+  const metadata: AppOptions = { ...direct, category: direct.category ?? 'productivity',
+    description: direct.description ?? `Tools provided by ${direct.name}.` };
   class DefinedApp extends JovitaApp {
     override providers() { return [...providers.values()]; }
     override tools() { return tools; }

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, cpSync, writeFileSync, chmodSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, cpSync, writeFileSync, chmodSync, readFileSync, symlinkSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { build } from 'esbuild';
 import { tsImport } from 'tsx/esm/api';
-import { JovitaApp, RuntimeApp, compileApp, isRuntimeApp } from '@jovita-ai/sdk';
+import { JovitaApp, RuntimeApp, compileApp, isRuntimeApp, isCommandApp } from '@jovita-ai/sdk';
 import type { ServiceConfig } from '@jovita-ai/sdk';
 
 export function sdkProjectPath(root: string): string | undefined {
@@ -41,6 +41,20 @@ export async function loadProjectDefinition(root: string, options: { allowManife
     }
     return app;
   }
+  if (isCommandApp(app)) {
+    const manifest = compileApp(app);
+    const savedPath = resolve(root, 'jovita.service.json');
+    if (!options.allowManifestDrift && existsSync(savedPath)) {
+      const saved = JSON.parse(readFileSync(savedPath, 'utf8')) as ServiceConfig;
+      if (!isDeepStrictEqual(saved, manifest)) {
+        throw new Error('SDK declaration and jovita.service.json differ. Run jov sync to update the generated manifest.');
+      }
+    }
+    if (!existsSync(resolve(root, 'runtime/package.json'))) {
+      throw new Error('Command apps need runtime/package.json');
+    }
+    return app;
+  }
   if (!app || typeof app.providers !== 'function' || typeof app.tools !== 'function'
     || typeof app.config?.id !== 'string') {
     throw new Error('Default export must extend JovitaApp');
@@ -53,8 +67,8 @@ export async function loadProjectDefinition(root: string, options: { allowManife
 
 export async function loadSdkApp(root: string): Promise<JovitaApp> {
   const app = await loadProjectDefinition(root);
-  if (isRuntimeApp(app)) {
-    throw new Error('This app uses its existing command runtime. Run that runtime locally; jov build and jov verify support its SDK declaration.');
+  if (isRuntimeApp(app) || isCommandApp(app)) {
+    throw new Error('This app uses a command runtime. Use jov dev with --args-json or run its command locally.');
   }
   return app;
 }
@@ -72,6 +86,11 @@ export async function prepareSdkProject(projectRoot: string): Promise<PreparedSd
   const root = await mkdtemp(join(tmpdir(), `jov-sdk-${app.config.id}-`));
   try {
     writeFileSync(resolve(root, 'jovita.service.json'), JSON.stringify(manifest, null, 2));
+    if (isCommandApp(app)) {
+      symlinkSync(resolve(projectRoot, 'runtime'), resolve(root, 'runtime'), 'dir');
+      symlinkSync(resolve(projectRoot, 'skill'), resolve(root, 'skill'), 'dir');
+      return { root, app, cleanup: () => rm(root, { recursive: true, force: true }) };
+    }
     const sourceSkill = resolve(projectRoot, 'skill');
     const targetSkill = resolve(root, 'skill');
     if (existsSync(sourceSkill)) cpSync(sourceSkill, targetSkill, { recursive: true });

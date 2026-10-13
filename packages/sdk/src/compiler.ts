@@ -1,8 +1,10 @@
 import type { JovitaApp } from './app.js';
 import { schemaJson } from './schema.js';
 import type { ServiceConfig } from './contracts.js';
+import { isCommandApp } from './command-app.js';
 
 export function compileApp(app: JovitaApp): ServiceConfig {
+  if (isCommandApp(app)) return app.serviceConfig();
   const providers = app.providers();
   const tools = app.tools();
   const providerIds = new Set<string>();

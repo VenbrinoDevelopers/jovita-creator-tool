@@ -1,7 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
-import { defineApp, provider, compileApp, defineRuntimeApp, defineSkillApp, JovitaApp, JovitaTool } from '../dist/index.js';
+import { defineApp, provider, compileApp, defineRuntimeApp, defineSkillApp, commandTools, JovitaApp, JovitaTool } from '../dist/index.js';
+
+test('command-backed defineApp retains CLI routing, grants, and storefront fields', () => {
+  const app = defineApp({ id: 'leads', name: 'Leads', version: '1.0.0',
+    category: 'sales', description: 'Find local businesses for outreach.',
+    billing: { tier: 'free', entitlementKey: 'pack.leads' },
+    tools: commandTools([{ id: 'find', argvPrefix: ['find'],
+      capabilities: ['google.places.text_search'], billingRequired: true,
+      activity: { kind: 'search', object: 'leads' } }]),
+    healthCheck: { command: 'leads', args: ['--help'], operationId: 'find' },
+  });
+  const manifest = compileApp(app);
+  assert.equal(manifest.runtime.execute.command, 'leads');
+  assert.deepEqual(manifest.runtime.execute.operations[0].capabilities, ['google.places.text_search']);
+  assert.equal(manifest.billing.entitlementKey, 'pack.leads');
+  assert.equal(manifest.runtime.execute.healthCheck.operationId, 'find');
+  assert.throws(() => commandTools([{ id: 'find', argvPrefix: ['a'], capabilities: [], billingRequired: false },
+    { id: 'find', argvPrefix: ['b'], capabilities: [], billingRequired: false }]), /Duplicate/);
+});
 
 test('one route compiles to one priced operation and one limited tool grant', () => {
   const search = provider({ name: 'Search API', baseUrl: 'https://api.example.com', auth: 'bearer' });

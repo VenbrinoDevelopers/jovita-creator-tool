@@ -1,22 +1,47 @@
 {
   "name": "@jovita-ai/sdk",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "TypeScript declarations and workflows for Jovita apps",
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/VenbrinoDevelopers/jovita-creator-tool.git", "directory": "packages/sdk" },
-  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" },
-  "type": "module",
-  "engines": { "node": ">=22.19.0" },
-  "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./runtime": { "types": "./runtime/index.d.ts", "import": "./runtime/index.js" }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VenbrinoDevelopers/jovita-creator-tool.git",
+    "directory": "packages/sdk"
   },
-  "files": ["dist", "runtime"],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./runtime": {
+      "types": "./runtime/index.d.ts",
+      "import": "./runtime/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "runtime"
+  ],
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test test/*.test.mjs"
   },
-  "dependencies": { "@jovita-ai/runtime": "0.1.1", "ajv": "^8.17.1", "zod": "^4.1.12" },
-  "devDependencies": { "@types/node": "^22.13.10", "typescript": "^5.9.3" }
+  "dependencies": {
+    "@jovita-ai/runtime": "0.1.1",
+    "ajv": "^8.17.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.9.3"
+  }
 }

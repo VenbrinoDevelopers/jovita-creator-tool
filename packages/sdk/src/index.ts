@@ -8,6 +8,8 @@ export { compileApp } from './compiler.js';
 export { runCli } from './runner.js';
 export type { Schema, InputOf, OutputOf } from './schema.js';
 export { defineApp, provider, ProviderBuilder, ApiToolSpec } from './fluent.js';
+export { CommandApp, CommandToolSpec, commandTool, commandTools, isCommandApp } from './command-app.js';
+export type { CommandAppOptions } from './command-app.js';
 export * from './contracts.js';
 export { RuntimeApp, defineRuntimeApp, defineSkillApp, isRuntimeApp } from './runtime-app.js';
 export type { RuntimeAppDeclaration, RuntimeAppOptions, SkillAppOptions } from './runtime-app.js';

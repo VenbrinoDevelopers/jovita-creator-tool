@@ -33,7 +33,7 @@ export default defineApp({
 
 ## Start and test
 
-Requires Node.js 22.19 or newer. Install the CLI from npm. `jov init` adds the SDK and runtime to executable projects; skill-only projects do not need them.
+Requires Node.js 22.19 or newer. Install the CLI from npm. `jov init` adds the SDK to executable projects; skill-only projects do not need it.
 
 ```sh
 npm install -g @jovita-ai/cli
@@ -71,35 +71,37 @@ Use `jov init my-app --template custom` when a tool needs branching, several pro
 
 The SDK compiles both styles into the same manifest and `.jov` format. Existing hand-written `jovita.service.json` projects remain supported. Keep one authoring source for each project.
 
-## Existing command miniapps
+## Command-backed apps
 
-An existing command miniapp keeps its source and SDK declaration together under `runtime/`. Put `defineRuntimeApp({...})` in `runtime/jovita.app.ts`, next to its `runtime/src/` code. Larger apps can keep their operation grants in `runtime/operation-contracts.ts` and their storefront details in `runtime/release-metadata.ts`. The SDK supplies the standard broker protocol and skill path. Run `jov sync` to generate its compatibility `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. New apps should use `defineApp` and SDK `ctx.call()` directly.
+A command-backed app can keep an established CLI workflow and declare its tools with `defineApp`. Put `runtime/jovita.app.ts` beside the command source. A command tool defines the CLI argument route, its allowed broker calls, activity, and billing requirement. Larger apps can keep these declarations in `runtime/tools.ts` and storefront details in `runtime/release-metadata.ts`. `jov sync` writes a generated `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. The SDK declaration remains the authoring source.
 
 ```ts
-import { defineRuntimeApp } from '@jovita-ai/sdk';
-import { operations } from './operation-contracts.js';
+import { defineApp } from '@jovita-ai/sdk';
+import { tools } from './tools.js';
 
-export default defineRuntimeApp({
+export default defineApp({
   id: 'my-command', name: 'My Command', version: '1.0.0',
   description: 'Run a command with approved broker operations.',
-  operations,
+  tools,
   healthCheck: { command: 'my-command', args: ['--help'], operationId: 'offline' },
 });
 ```
 
+Use `@jovita-ai/sdk/runtime` inside command code for broker calls and receipt recovery. `jov dev <tool-id> --dir <app> --args-json '["--query","example"]'` runs a command tool with local response fixtures. A custom SDK workflow uses `run(ctx, input)` and `ctx.call()`; command-backed tools keep their established argument and output contract.
+
 An executable app cannot omit its operation grants: Jovita uses them to authorize and bill broker calls. A skill-only app has no command runtime or broker calls. Create one with `jov init my-skill --template skill`; it needs `skill/SKILL.md`, a small `jovita.service.json`, and the CLI for packaging, but it does not need `@jovita-ai/sdk` or `@jovita-ai/runtime`. Developers who prefer a typed declaration can use the optional `defineSkillApp({...})` helper.
 
-The 17 retained first-party miniapps use this migration path in the Jovita SaaS repository. Their declarations are checked against the compatibility manifests, and their brokered runtimes use the public `@jovita-ai/runtime` call client. Broker operation IDs, tool grants, commands, activity metadata, and buyer-facing release details are preserved during migration.
+The 17 retained first-party miniapps use this `defineApp` path in the Jovita SaaS repository. Their compiled declarations are checked against the generated manifests, and their command code imports the broker transport through `@jovita-ai/sdk/runtime`. Broker operation IDs, tool grants, commands, activity metadata, and buyer-facing release details are preserved.
 
 ## Repository layout
 
 - `packages/sdk`: public authoring API, compiler, and schemas.
-- `packages/runtime`: small authenticated call client shared by the SDK and existing miniapps.
+- `packages/runtime`: small authenticated call client used through `@jovita-ai/sdk/runtime` by command apps and through `ctx.call()` by SDK workflows.
 - `packages/cli`: project commands and `.jov` packaging.
 - `examples/fluent-example`: direct API tool.
 - `examples/custom-example`: class-based workflow.
 
-The broker, creator credentials, buyer billing, and platform lifecycle services stay in Jovita's private server repositories. Existing published miniapps import `@jovita-ai/runtime` directly; it is the same call transport that SDK apps use through `ctx.call()`.
+The broker, creator credentials, buyer billing, and platform lifecycle services stay in Jovita's private server repositories. Command apps import `@jovita-ai/sdk/runtime`; direct SDK workflows use `ctx.call()`.
 
 ## npm releases
 
