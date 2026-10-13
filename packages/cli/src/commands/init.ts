@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 export const initCommand = new Command('init')
@@ -92,15 +92,18 @@ export default class ${id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()
 }
 `;
     writeFileSync(resolve(root, 'src/jovita.app.ts'), appSource);
+    const cliPackage = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as {
+      version: string;
+      dependencies: Record<string, string>;
+    };
     writeFileSync(resolve(root, 'package.json'), JSON.stringify({
       name: id, version: '0.1.0', private: true, type: 'module',
       dependencies: {
-        '@jovita/runtime': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-runtime-0.1.0.tgz',
-        '@jovita/sdk': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-sdk-0.1.3.tgz',
+        '@jovita/sdk': cliPackage.dependencies['@jovita/sdk'],
         zod: '^4.1.12',
       },
       devDependencies: {
-        '@jovita/cli': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-cli-0.1.3.tgz',
+        '@jovita/cli': cliPackage.version,
         typescript: '^5.9.3',
       },
       scripts: { dev: `jov dev ${options.template === 'api' ? 'search' : 'lookup'} --input '{"query":"hello"}'`, build: 'jov build --target linux-amd64' },

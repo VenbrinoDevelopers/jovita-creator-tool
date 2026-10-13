@@ -1,6 +1,10 @@
 {
   "name": "@jovita/runtime",
   "version": "0.1.0",
+  "description": "Authenticated broker call client for Jovita apps",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/VenbrinoDevelopers/jovita-creator-tool.git", "directory": "packages/runtime" },
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" },
   "type": "module",
   "engines": { "node": ">=22.19.0" },
   "exports": { ".": { "types": "./index.d.ts", "import": "./index.js" } },

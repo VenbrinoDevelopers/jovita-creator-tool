@@ -33,13 +33,10 @@ export default defineApp({
 
 ## Start and test
 
-Requires Node.js 22.19 or newer. The packages are available as versioned archives on [GitHub Releases](https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases). Install the three packages together while they are distributed from GitHub:
+Requires Node.js 22.19 or newer. Install the CLI from npm. `jov init` adds the SDK and runtime to executable projects; skill-only projects do not need them.
 
 ```sh
-npm install -g \
-  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-runtime-0.1.0.tgz \
-  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-sdk-0.1.3.tgz \
-  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-cli-0.1.3.tgz
+npm install -g @jovita/cli
 jov init web-search
 cd web-search
 npm install
@@ -53,7 +50,7 @@ jov verify build/web-search-0.1.0-linux-amd64.jov
 
 For a skill-only app, use `jov init my-skill --template skill`, edit `skill/SKILL.md`, then run `jov build`. No Node runtime target or SDK dependency is needed.
 
-To work from this repository before package publication, run `npm install && npm run build && npm test` at the root. The checked-in examples use local package references.
+To work from this repository, run `npm install && npm run build && npm test` at the root. The checked-in examples use local package references.
 
 ## Connect and submit
 
@@ -103,3 +100,11 @@ The 17 retained first-party miniapps use this migration path in the Jovita SaaS 
 - `examples/custom-example`: class-based workflow.
 
 The broker, creator credentials, buyer billing, and platform lifecycle services stay in Jovita's private server repositories. Existing published miniapps import `@jovita/runtime` directly; it is the same call transport that SDK apps use through `ctx.call()`.
+
+## npm releases
+
+The three public packages are `@jovita/runtime`, `@jovita/sdk`, and `@jovita/cli`. Runtime is published first because the SDK depends on it; the SDK is published before the CLI. Package versions are immutable on npm. When changing the SDK or CLI version, update the CLI's exact SDK dependency too. `jov init` reads these versions from the CLI package so generated projects install the matching release.
+
+The [publish workflow](.github/workflows/publish.yml) runs on tags named `npm-v<version>` that point to commits on `main`. The tag version must equal the SDK and CLI versions. Before tagging, run `npm ci && npm run build && npm run typecheck && npm test`, then review `npm pack --dry-run -w @jovita/runtime`, `npm pack --dry-run -w @jovita/sdk`, and `npm pack --dry-run -w @jovita/cli`. Push the release commit, then create and push the tag, for example `git tag npm-v0.1.4 && git push origin npm-v0.1.4`. The workflow skips any package version already published, which allows a partial release to resume in dependency order.
+
+Publishing uses npm trusted publishing with GitHub Actions OIDC. Each package must have a trusted publisher configured on npm: GitHub owner `VenbrinoDevelopers`, repository `jovita-creator-tool`, workflow filename `publish.yml`, and direct `npm publish` permission. No npm token is stored in GitHub. The initial version of a new package must be published by an npm organization owner before its trusted publisher can be configured.
