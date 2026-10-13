@@ -50,6 +50,16 @@ function brokeredConfig(): ServiceConfig {
   };
 }
 
+test('skill-only bundles include the release compatibility required by Jovita upload', async () => {
+  const config = brokeredConfig();
+  delete config.runtime;
+  const archive = await JSZip.loadAsync(await buildBundle({ config, skillPath: '.', skillIndex: [] }));
+  const bundled = JSON.parse(await archive.file('manifest.json')!.async('text'));
+  assert.deepEqual(bundled.release.compat, { minRuntimeVersion: '0.1.0' });
+  assert.deepEqual(buildPublishedManifest(config, [], { checksum: 'checksum', signature: 'signature' }).compat,
+    { minRuntimeVersion: '0.1.0' });
+});
+
 test('accepts a future mini-app that declares a reusable registered capability id', () => {
   assert.deepEqual(validateManifest(brokeredConfig()), { valid: true, errors: [] });
 });

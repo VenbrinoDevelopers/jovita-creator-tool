@@ -20,6 +20,7 @@ export const initCommand = new Command('init')
         id, name: display, version: '0.1.0', category: 'productivity',
         description: `A skill that helps with ${display.toLowerCase()}.`,
         skill: { entry: 'skill/SKILL.md', assets: ['skill/SKILL.md'] },
+        compat: { minRuntimeVersion: '0.1.0' },
       }, null, 2) + '\n');
       writeFileSync(resolve(root, 'skill/SKILL.md'), `# ${display}\n\nDescribe when and how Jovita should use this skill.\n`);
       writeFileSync(resolve(root, '.gitignore'), 'build/\n.env\n');
@@ -94,12 +95,12 @@ export default class ${id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()
     writeFileSync(resolve(root, 'package.json'), JSON.stringify({
       name: id, version: '0.1.0', private: true, type: 'module',
       dependencies: {
-        '@jovita/runtime': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-runtime-0.1.0.tgz',
-        '@jovita/sdk': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-sdk-0.1.2.tgz',
+        '@jovita/runtime': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-runtime-0.1.0.tgz',
+        '@jovita/sdk': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-sdk-0.1.3.tgz',
         zod: '^4.1.12',
       },
       devDependencies: {
-        '@jovita/cli': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-cli-0.1.2.tgz',
+        '@jovita/cli': 'https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-cli-0.1.3.tgz',
         typescript: '^5.9.3',
       },
       scripts: { dev: `jov dev ${options.template === 'api' ? 'search' : 'lookup'} --input '{"query":"hello"}'`, build: 'jov build --target linux-amd64' },

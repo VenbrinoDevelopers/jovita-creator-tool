@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
-import { defineApp, provider, compileApp, defineRuntimeApp, JovitaApp, JovitaTool } from '../dist/index.js';
+import { defineApp, provider, compileApp, defineRuntimeApp, defineSkillApp, JovitaApp, JovitaTool } from '../dist/index.js';
 
 test('one route compiles to one priced operation and one limited tool grant', () => {
   const search = provider({ name: 'Search API', baseUrl: 'https://api.example.com', auth: 'bearer' });
@@ -96,8 +96,9 @@ test('compact command declarations supply broker protocol defaults', () => {
 });
 
 test('metadata-only declarations produce skill-only apps without a runtime', () => {
-  const app = defineRuntimeApp({ id: 'writing-skill', name: 'Writing Skill', version: '1.0.0',
+  const app = defineSkillApp({ id: 'writing-skill', name: 'Writing Skill', version: '1.0.0',
     description: 'Help draft short messages.' });
   assert.equal(app.manifest.runtime, undefined);
   assert.equal(app.manifest.skill.entry, 'skill/SKILL.md');
+  assert.equal(app.manifest.compat.minRuntimeVersion, '0.1.0');
 });

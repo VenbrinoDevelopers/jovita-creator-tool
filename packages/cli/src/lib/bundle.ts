@@ -40,7 +40,7 @@ export async function buildBundle({
       activityProtocolVersion: config.activityProtocolVersion,
       auth: config.auth,
       providers: config.providers,
-      compat: config.compat,
+      compat: config.compat ?? { minRuntimeVersion: '0.1.0' },
     },
     ...(config.broker ? { broker: config.broker } : {}),
     skill: {

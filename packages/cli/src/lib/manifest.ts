@@ -533,7 +533,7 @@ export function buildPublishedManifest(
     providers: config.providers,
     ...(config.broker ? { broker: config.broker } : {}),
     billing: config.billing,
-    compat: config.compat,
+    compat: config.compat ?? { minRuntimeVersion: '0.1.0' },
     skill: {
       entry: config.skill.entry,
       index: skillIndex,

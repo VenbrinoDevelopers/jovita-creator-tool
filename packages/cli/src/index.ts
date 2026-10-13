@@ -13,7 +13,7 @@ import { syncCommand } from './commands/sync.js';
 
 const program = new Command();
 
-program.name('jov').description('Build, test, and submit Jovita apps').version('0.1.2');
+program.name('jov').description('Build, test, and submit Jovita apps').version('0.1.3');
 
 program.addCommand(buildCommand);
 program.addCommand(verifyCommand);

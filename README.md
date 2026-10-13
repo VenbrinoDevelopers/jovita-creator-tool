@@ -37,9 +37,9 @@ Requires Node.js 22.19 or newer. The packages are available as versioned archive
 
 ```sh
 npm install -g \
-  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-runtime-0.1.0.tgz \
-  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-sdk-0.1.2.tgz \
-  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.2/jovita-cli-0.1.2.tgz
+  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-runtime-0.1.0.tgz \
+  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-sdk-0.1.3.tgz \
+  https://github.com/VenbrinoDevelopers/jovita-creator-tool/releases/download/v0.1.3/jovita-cli-0.1.3.tgz
 jov init web-search
 cd web-search
 npm install
@@ -76,7 +76,7 @@ The SDK compiles both styles into the same manifest and `.jov` format. Existing 
 
 ## Existing command miniapps
 
-An existing command miniapp keeps its source and SDK declaration together under `runtime/`. Put `defineRuntimeApp({...})` in `runtime/jovita.app.ts`, next to its `runtime/src/` code. The compact declaration names its commands, broker grants, and health check; the SDK supplies the standard broker protocol and skill path. Run `jov sync` to generate its compatibility `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. New apps should use `defineApp` and SDK `ctx.call()` directly.
+An existing command miniapp keeps its source and SDK declaration together under `runtime/`. Put `defineRuntimeApp({...})` in `runtime/jovita.app.ts`, next to its `runtime/src/` code. Larger apps can keep their operation grants in `runtime/operation-contracts.ts` and their storefront details in `runtime/release-metadata.ts`. The SDK supplies the standard broker protocol and skill path. Run `jov sync` to generate its compatibility `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. New apps should use `defineApp` and SDK `ctx.call()` directly.
 
 ```ts
 import { defineRuntimeApp } from '@jovita/sdk';
@@ -90,7 +90,7 @@ export default defineRuntimeApp({
 });
 ```
 
-An executable app cannot omit its operation grants: Jovita uses them to authorize and bill broker calls. A skill-only app has no command runtime or broker calls. Create one with `jov init my-skill --template skill`; it needs `skill/SKILL.md`, a small `jovita.service.json`, and the CLI for packaging, but it does not need `@jovita/sdk` or `@jovita/runtime`.
+An executable app cannot omit its operation grants: Jovita uses them to authorize and bill broker calls. A skill-only app has no command runtime or broker calls. Create one with `jov init my-skill --template skill`; it needs `skill/SKILL.md`, a small `jovita.service.json`, and the CLI for packaging, but it does not need `@jovita/sdk` or `@jovita/runtime`. Developers who prefer a typed declaration can use the optional `defineSkillApp({...})` helper.
 
 The 17 retained first-party miniapps use this migration path in the Jovita SaaS repository. Their declarations are checked against the compatibility manifests, and their brokered runtimes use the public `@jovita/runtime` call client. Broker operation IDs, tool grants, commands, activity metadata, and buyer-facing release details are preserved during migration.
 

@@ -14,6 +14,8 @@ export interface RuntimeAppOptions extends Omit<ServiceConfig, 'category' | 'pro
   runtimeBuild?: NonNullable<ServiceConfig['runtime']>['build'];
 }
 
+export type SkillAppOptions = Omit<RuntimeAppOptions, 'operations' | 'command' | 'healthCheck' | 'runtimeBuild'>;
+
 /** Typed declarations for an existing command runtime during SDK migration. */
 export class RuntimeApp {
   readonly kind = 'existing-runtime' as const;
@@ -31,9 +33,9 @@ export class RuntimeApp {
       category: metadata.category ?? 'productivity',
       providers: metadata.providers ?? [],
       skill: metadata.skill ?? { entry: 'skill/SKILL.md', assets: ['skill/SKILL.md'] },
+      compat: metadata.compat ?? { minRuntimeVersion: '0.1.0' },
       ...(executable ? {
         activityProtocolVersion: 1,
-        compat: metadata.compat ?? { minRuntimeVersion: '0.1.0' },
         runtime: {
           ...(runtimeBuild ? { build: runtimeBuild } : {}),
           execute: { command: command ?? metadata.id, mode: 'brokered', protocolVersion: 1,
@@ -50,6 +52,11 @@ export class RuntimeApp {
 }
 
 export function defineRuntimeApp(options: RuntimeAppDeclaration | RuntimeAppOptions): RuntimeApp {
+  return new RuntimeApp(options);
+}
+
+/** Optional typed authoring for skill-only apps; a JSON manifest works without the SDK. */
+export function defineSkillApp(options: SkillAppOptions): RuntimeApp {
   return new RuntimeApp(options);
 }
 
