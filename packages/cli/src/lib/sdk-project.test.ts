@@ -13,11 +13,13 @@ test('an existing runtime has one SDK source and an explicitly synced compatibil
     mkdirSync(join(root, 'src'));
     writeFileSync(join(root, 'src/jovita.app.ts'), `import { defineRuntimeApp } from '@jovita/sdk';
 export default defineRuntimeApp({
-  id: 'test-app', name: 'Test App', version: '1.0.0', category: 'productivity',
+  id: 'test-app', name: 'Test App', version: '1.0.0', category: 'productivity', activityProtocolVersion: 1,
   description: 'An existing command runtime',
   skill: { entry: 'skill/SKILL.md', assets: ['skill/SKILL.md'] },
   runtime: { execute: { command: 'test-app', mode: 'brokered', protocolVersion: 1,
-    operations: [{ id: 'check', argvPrefix: ['check'], capabilities: [], billingRequired: false }] } },
+    operations: [{ id: 'check', argvPrefix: ['check'], capabilities: [], billingRequired: false,
+      activity: { kind: 'check', object: 'service health', icon: 'check' } }],
+    healthCheck: { command: 'test-app', args: ['check'], operationId: 'check' } } },
 });`);
     await assert.rejects(syncRuntimeManifest(root, true), /differ/);
     assert.equal(await syncRuntimeManifest(root, false), 'updated');
