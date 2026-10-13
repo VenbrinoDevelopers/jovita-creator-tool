@@ -1,6 +1,6 @@
 {
   "name": "@jovita-ai/sdk",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "TypeScript declarations and workflows for Jovita apps",
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/VenbrinoDevelopers/jovita-creator-tool.git", "directory": "packages/sdk" },
@@ -17,6 +17,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test test/*.test.mjs"
   },
-  "dependencies": { "@jovita-ai/runtime": "0.1.0", "ajv": "^8.17.1", "zod": "^4.1.12" },
+  "dependencies": { "@jovita-ai/runtime": "0.1.1", "ajv": "^8.17.1", "zod": "^4.1.12" },
   "devDependencies": { "@types/node": "^22.13.10", "typescript": "^5.9.3" }
 }

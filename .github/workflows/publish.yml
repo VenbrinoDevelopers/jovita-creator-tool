@@ -61,4 +61,16 @@ jobs:
               cat /tmp/npm-version.err >&2
               exit 1
             fi
+            visible=false
+            for attempt in $(seq 1 60); do
+              if npm view "$name@$version" version --prefer-online --registry=https://registry.npmjs.org/ > /dev/null 2>&1; then
+                visible=true
+                break
+              fi
+              sleep 10
+            done
+            test "$visible" = true || {
+              echo "$name@$version was accepted but did not become visible on npm within 10 minutes." >&2
+              exit 1
+            }
           done
