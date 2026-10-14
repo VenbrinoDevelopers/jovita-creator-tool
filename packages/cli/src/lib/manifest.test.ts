@@ -148,7 +148,7 @@ test('rejects an unbounded total broker call budget', () => {
   const first = 'broker.future-miniapp.search1api.search.v1';
   const second = 'broker.future-miniapp.search1api.news.v1';
   config.runtime!.execute!.operations![1]!.capabilities = [first, second];
-  config.runtime!.execute!.operations![1]!.capabilityLimits = { [first]: 64, [second]: 65 };
+  config.runtime!.execute!.operations![1]!.capabilityLimits = { [first]: 128, [second]: 385 };
   assert.ok(validateManifest(config).errors.some(error => error.field.includes('capabilityLimits')));
 });
 

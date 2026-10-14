@@ -36,6 +36,7 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
+    "@jovita-ai/provider-catalog": "0.1.0",
     "@jovita-ai/runtime": "0.1.1",
     "ajv": "^8.17.1",
     "zod": "^4.1.12"

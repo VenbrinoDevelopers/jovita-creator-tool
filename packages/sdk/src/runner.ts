@@ -9,7 +9,7 @@ export async function runCli(app: JovitaApp, argv = process.argv.slice(2)): Prom
   if (!tool) throw new Error(`Unknown tool: ${toolId ?? ''}`);
   const input = rawInput ? JSON.parse(rawInput) : {};
   const validatedInput = validateValue(tool.config.input, input, 'Tool input');
-  const result = await tool.run(new ToolContext(app.config.id, tool.config.id), validatedInput);
+  const result = await tool.run(new ToolContext(app.config.id, tool.config.id, tool.config.uses), validatedInput);
   const validatedOutput = validateValue(tool.config.output, result, 'Tool output');
   process.stdout.write(JSON.stringify(validatedOutput) + '\n');
 }

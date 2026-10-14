@@ -58,13 +58,12 @@ export interface BrokerDeclaration {
       purpose: string;
       method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
       path: string;
-      executionKind?: 'http-json' | 'http-multipart' | 'http-binary' | 'http-sse' | 'http-poll' | 'named-run';
+      executionKind?: 'http-json' | 'http-multipart' | 'http-binary' | 'http-sse' | 'http-poll';
       poll?: { path: string; jobIdField: string; statusField: string; resultField?: string;
         successValue: string; failureValue: string; failureValues?: string[];
+        providerStatusField?: string; noResultStatuses?: number[];
         intervalMs: number; maxAttempts: number };
       artifact?: { path: string; kind: 'video' | 'audio'; maxBytes: number; retentionSeconds: number; timeoutMs?: number };
-      providerName?: string;
-      endpoint?: string;
       mediaPreset?: 'transparent-png-v1';
       requestMapping?: { body: Record<string, { from: string } | { const: string | number | boolean }> };
       responseField?: string;

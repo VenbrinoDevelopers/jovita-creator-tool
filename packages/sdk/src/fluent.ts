@@ -15,6 +15,7 @@ type RouteOptions<I extends Schema, O extends Schema> = Omit<ApiOperationOptions
   'id' | 'name' | 'purpose' | 'method' | 'path'> & { description: string; name?: string;
     activity?: JovitaActivitySpecV1; destructive?: boolean };
 
+
 export class ApiToolSpec<I extends Schema, O extends Schema> {
   constructor(readonly provider: ProviderBuilder, readonly method: ApiOperationOptions<I, O>['method'],
     readonly path: string, readonly options: RouteOptions<I, O>) {}

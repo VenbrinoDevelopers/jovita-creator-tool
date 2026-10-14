@@ -12,4 +12,6 @@ export { CommandApp, CommandToolSpec, commandTool, commandTools, isCommandApp } 
 export type { CommandAppOptions, CommandToolInput, NamedCommandToolInput } from './command-app.js';
 export * from './contracts.js';
 export { RuntimeApp, defineRuntimeApp, defineSkillApp, isRuntimeApp } from './runtime-app.js';
+export { builtinReferences as builtins, providerCatalog, findCatalogOperation } from '@jovita-ai/provider-catalog';
+export type { BuiltinProviderClient, BuiltinReferences } from '@jovita-ai/provider-catalog';
 export type { RuntimeAppDeclaration, RuntimeAppOptions, SkillAppOptions } from './runtime-app.js';

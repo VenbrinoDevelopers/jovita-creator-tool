@@ -1,0 +1,35 @@
+{
+  "name": "@jovita-ai/broker",
+  "version": "0.1.0",
+  "description": "Self-hostable Jovita broker for declared provider operations",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@jovita-ai/provider-catalog": "0.1.0",
+    "@nestjs/common": "^11.1.24",
+    "@nestjs/core": "^11.1.24",
+    "@nestjs/mongoose": "^11.0.4",
+    "@nestjs/platform-express": "^11.1.24",
+    "@nestjs/schedule": "^6.1.1",
+    "ajv": "^8.20.0",
+    "ioredis": "^5.10.0",
+    "ipaddr.js": "^2.5.0",
+    "mongoose": "^9.2.4",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "sharp": "0.35.5",
+    "undici": "^7.29.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.13.10",
+    "typescript": "^5.9.3"
+  }
+}

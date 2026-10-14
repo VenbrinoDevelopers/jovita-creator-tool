@@ -250,7 +250,7 @@ export function validateBrokerDeclaration(config: ServiceConfig, errors: Manifes
   const allowedProvider = new Set(['id', 'name', 'summary', 'docsUrl', 'category', 'baseUrl',
     'authMethod', 'authHeader', 'timeoutMs', 'operations']);
   const allowedOperation = new Set(['id', 'version', 'name', 'purpose', 'method', 'path',
-    'executionKind', 'providerName', 'endpoint', 'mediaPreset', 'requestMapping', 'responseField', 'queryFields',
+    'executionKind', 'mediaPreset', 'requestMapping', 'responseField', 'queryFields',
     'maxProviderCostMicros', // accepted only to verify older signed bundles; broker ignores it
     'inputSchema', 'outputSchema', 'buyerCredits', 'maxRequestBytes', 'maxResponseBytes', 'providerCostNote',
     'emptyResultIsNoResult', 'poll', 'artifact']);
@@ -289,7 +289,7 @@ export function validateBrokerDeclaration(config: ServiceConfig, errors: Manifes
         || !/^[a-z][a-z0-9_-]{1,63}$/.test(operationId)
         || !Number.isSafeInteger(version) || version < 1 || version > 1000
         || !['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(String(operation.method))
-        || (operation.executionKind !== undefined && !['http-json', 'http-multipart', 'http-binary', 'http-sse', 'http-poll', 'named-run'].includes(String(operation.executionKind)))
+        || (operation.executionKind !== undefined && !['http-json', 'http-multipart', 'http-binary', 'http-sse', 'http-poll'].includes(String(operation.executionKind)))
         || typeof operation.path !== 'string' || !operation.path.startsWith('/')
         || !Number.isSafeInteger(operation.buyerCredits) || Number(operation.buyerCredits) < 1
         || (operation.emptyResultIsNoResult !== undefined && typeof operation.emptyResultIsNoResult !== 'boolean')
@@ -307,6 +307,12 @@ export function validateBrokerDeclaration(config: ServiceConfig, errors: Manifes
           || (poll.failureValues !== undefined && (!Array.isArray(poll.failureValues)
             || poll.failureValues.length > 8
             || !poll.failureValues.every(value => typeof value === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(value))))
+          || (poll.providerStatusField !== undefined && (typeof poll.providerStatusField !== 'string'
+            || !/^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*){0,3}$/.test(poll.providerStatusField)))
+          || (poll.noResultStatuses !== undefined && (poll.providerStatusField === undefined
+            || !Array.isArray(poll.noResultStatuses) || poll.noResultStatuses.length > 8
+            || !poll.noResultStatuses.every(status => Number.isSafeInteger(status)
+              && status >= 400 && status <= 499)))
           || !Number.isSafeInteger(poll.intervalMs)
           || !Number.isSafeInteger(poll.maxAttempts)) {
           errors.push({ field: `${operationPath}.poll`, message: 'declare a bounded submit and poll contract' });
@@ -419,9 +425,9 @@ export function validateBrokerExecution(
     }
     const catalogCallBudget = (operation.capabilities ?? []).filter(capability => capability.startsWith('broker.'))
       .reduce((sum, capability) => sum + (operation.capabilityLimits?.[capability] ?? 1), 0);
-    if (catalogCallBudget > 128) {
+    if (catalogCallBudget > 512) {
       errors.push({ field: `runtime.execute.operations[${index}].capabilityLimits`,
-        message: 'one runtime operation cannot declare more than 128 broker calls' });
+        message: 'one runtime operation cannot declare more than 512 broker calls' });
     }
     if ((operation.capabilities ?? []).length > 0 && operation.billingRequired !== true) {
       errors.push({

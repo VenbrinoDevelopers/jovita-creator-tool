@@ -1,6 +1,6 @@
 {
   "name": "@jovita-ai/cli",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Create, test, build, and submit Jovita apps",
   "license": "MIT",
   "repository": {

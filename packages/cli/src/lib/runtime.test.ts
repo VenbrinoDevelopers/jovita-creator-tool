@@ -11,6 +11,27 @@ test('runtime target is optional for architecture-independent miniapps', () => {
   assert.equal(resolveRuntimeTarget(''), undefined);
 });
 
+test('ordinary builds exclude dependency CI and benchmarks from the signed runtime', () => {
+  const staging = mkdtempSync(resolve(tmpdir(), 'jov-runtime-default-prune-'));
+  try {
+    const dependency = resolve(staging, 'node_modules/fast-uri');
+    mkdirSync(resolve(dependency, '.github/workflows'), { recursive: true });
+    mkdirSync(resolve(dependency, 'benchmark'), { recursive: true });
+    writeFileSync(resolve(dependency, '.github/workflows/lock-threads.yml'), 'name: lock');
+    writeFileSync(resolve(dependency, 'benchmark/benchmark.mjs'), 'benchmark');
+    writeFileSync(resolve(dependency, 'index.js'), 'export default true');
+    writeFileSync(resolve(dependency, 'LICENSE'), 'license');
+    const report = applyRuntimeBuildOptimizations(staging);
+    assert.equal(report?.removedFiles, 2);
+    assert.equal(existsSync(resolve(dependency, '.github')), false);
+    assert.equal(existsSync(resolve(dependency, 'benchmark')), false);
+    assert.equal(existsSync(resolve(dependency, 'index.js')), true);
+    assert.equal(existsSync(resolve(dependency, 'LICENSE')), true);
+  } finally {
+    rmSync(staging, { recursive: true, force: true });
+  }
+});
+
 test('production-node pruning only changes staged dependencies and preserves runtime and legal files', () => {
   const source = mkdtempSync(resolve(tmpdir(), 'jov-runtime-source-'));
   const staging = mkdtempSync(resolve(tmpdir(), 'jov-runtime-prune-'));

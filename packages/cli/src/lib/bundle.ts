@@ -71,7 +71,11 @@ export async function buildBundle({
     };
   }
 
-  zip.file('manifest.json', JSON.stringify(bundleManifest, null, 2));
+  const manifestJson = JSON.stringify(bundleManifest, null, 2);
+  if (Buffer.byteLength(manifestJson) > 4 * 1024 * 1024) {
+    throw new Error('Bundle manifest exceeds the 4 MB publishing limit');
+  }
+  zip.file('manifest.json', manifestJson);
   const bytes = await zip.generateAsync({
     type: 'nodebuffer',
     compression: 'DEFLATE',
@@ -144,6 +148,10 @@ export async function verifyBundleArtifact(bundlePath: string): Promise<Record<s
   const manifestContent = zip.file('manifest.json');
   if (!manifestContent) {
     throw new Error('Bundle does not contain manifest.json');
+  }
+  const manifestSize = Number((manifestContent as typeof manifestContent & { _data?: { uncompressedSize?: number } })._data?.uncompressedSize);
+  if (!Number.isSafeInteger(manifestSize) || manifestSize > 4 * 1024 * 1024) {
+    throw new Error('Bundle manifest exceeds the 4 MB publishing limit');
   }
   const manifest = JSON.parse(await manifestContent.async('text')) as Record<string, unknown>;
   if (manifest.format !== BUNDLE_FORMAT) {

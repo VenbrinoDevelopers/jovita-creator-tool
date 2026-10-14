@@ -99,7 +99,10 @@ const PROTECTED_DOCUMENT_PATTERN = /^(?:licen[cs]e|copying|notice|copyright)(?:[
 const PRUNED_DOCUMENT_PATTERN = /^(?:readme|changelog|changes|history)(?:[._-].*)?$/i;
 const PRUNED_DIRECTORY_NAMES = new Set([
   '__tests__', 'test', 'tests', 'fixture', 'fixtures', 'example', 'examples',
-  'doc', 'docs', 'documentation', 'coverage',
+  'doc', 'docs', 'documentation', 'coverage', 'benchmark', 'benchmarks', '__benchmarks__',
+]);
+const NON_RUNTIME_DEPENDENCY_DIRECTORIES = new Set([
+  '.github', '.git', '.circleci', 'benchmark', 'benchmarks', '__benchmarks__',
 ]);
 
 export function applyRuntimeBuildOptimizations(
@@ -107,7 +110,6 @@ export function applyRuntimeBuildOptimizations(
   buildConfig?: RuntimeBuildConfig,
   target?: RuntimeTarget,
 ): RuntimeBuildReport | undefined {
-  if (!buildConfig?.prunePreset && !(buildConfig?.omitOptionalPackages?.length && target)) return undefined;
   const report: RuntimeBuildReport = {
     ...(buildConfig?.prunePreset ? { prunePreset: buildConfig.prunePreset } : {}),
     removedFiles: 0,
@@ -116,6 +118,10 @@ export function applyRuntimeBuildOptimizations(
     omittedOptionalPackages: [],
   };
   const nodeModulesRoot = resolve(appRoot, 'node_modules');
+
+  // npm packages frequently ship CI workflows and benchmarks. These are never
+  // loaded by the app and should not become signed release files or review rows.
+  if (existsSync(nodeModulesRoot)) pruneNonRuntimeDependencyDirectories(nodeModulesRoot, report);
 
   if (buildConfig?.prunePreset === 'production-node') {
     pruneProductionNodeTree(appRoot, nodeModulesRoot, report);
@@ -131,7 +137,20 @@ export function applyRuntimeBuildOptimizations(
       report.omittedOptionalPackages.push(packageName);
     }
   }
-  return report;
+  return report.removedFiles || report.omittedOptionalPackages.length || buildConfig?.prunePreset ? report : undefined;
+}
+
+function pruneNonRuntimeDependencyDirectories(directory: string, report: RuntimeBuildReport): void {
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.isSymbolicLink()) continue;
+    const path = resolve(directory, entry.name);
+    if (NON_RUNTIME_DEPENDENCY_DIRECTORIES.has(entry.name.toLowerCase())) {
+      recordRemoval(report, 'non-runtime-dependency-directories', path);
+      rmSync(path, { recursive: true, force: true });
+    } else {
+      pruneNonRuntimeDependencyDirectories(path, report);
+    }
+  }
 }
 
 function pruneProductionNodeTree(directory: string, nodeModulesRoot: string, report: RuntimeBuildReport): void {

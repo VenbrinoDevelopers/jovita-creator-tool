@@ -97,7 +97,7 @@ export const buildCommand = new Command('build')
     );
 
     console.log(JSON.stringify({ ok: true, bundlePath, target: runtimeTarget?.id ?? 'any',
-      checksum: bundleChecksum, files: [...skillIndex, ...(runtimePayload?.files ?? [])],
+      checksum: bundleChecksum, fileCount: skillIndex.length + (runtimePayload?.files.length ?? 0),
       manifestPath: manifestPathOut, ...(sizeReport ? { sizeReport } : {}) }, null, 2));
     } finally { await prepared?.cleanup(); }
   });

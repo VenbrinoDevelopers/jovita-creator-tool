@@ -2,6 +2,7 @@ import { capabilityContext, invokeCapability, stableCallId } from '@jovita-ai/ru
 import { validateValue, type Schema, type InputOf, type OutputOf } from './schema.js';
 import { ApiOperation } from './provider.js';
 import type { JovitaActivitySpecV1 } from './contracts.js';
+import { builtinReferences, type BuiltinProviderClient } from '@jovita-ai/provider-catalog';
 
 export interface ToolOptions<I extends Schema = Schema, O extends Schema = Schema> {
   id: string;
@@ -16,13 +17,28 @@ export interface ToolOptions<I extends Schema = Schema, O extends Schema = Schem
 export class ToolContext {
   private readonly ordinals = new Map<string, number>();
   private invocationId?: Promise<string>;
-  constructor(readonly appId: string, readonly toolId: string) {}
+  readonly providers: BuiltinProviderClient;
+  private readonly grants?: Map<string, number>;
+  constructor(readonly appId: string, readonly toolId: string,
+    uses?: ToolOptions['uses']) {
+    if (uses) this.grants = new Map(uses.map(use => [typeof use.operation === 'string'
+      ? use.operation : use.operation.reference(appId), use.maxCalls ?? Number.POSITIVE_INFINITY]));
+    this.providers = Object.fromEntries(Object.entries(builtinReferences).map(([provider, methods]) =>
+      [provider, Object.fromEntries(Object.entries(methods).map(([name, reference]) =>
+        [name, (input: Record<string, unknown>) => this.call(reference, input)]))])) as unknown as BuiltinProviderClient;
+  }
 
   async call<I extends Schema, O extends Schema>(operation: ApiOperation<I, O>, input: InputOf<I>): Promise<OutputOf<O>>;
   async call<T>(capability: string, input: Record<string, unknown>): Promise<T>;
   async call(operation: ApiOperation | string, input: Record<string, unknown>): Promise<unknown> {
     const reference = typeof operation === 'string' ? operation : operation.reference(this.appId);
     const ordinal = this.ordinals.get(reference) ?? 0;
+    if (this.grants && !this.grants.has(reference)) {
+      throw new Error(`Tool ${this.toolId} has no grant for ${reference}`);
+    }
+    if (ordinal >= (this.grants?.get(reference) ?? Number.POSITIVE_INFINITY)) {
+      throw new Error(`Tool ${this.toolId} exceeded its call limit for ${reference}`);
+    }
     this.ordinals.set(reference, ordinal + 1);
     this.invocationId ??= capabilityContext().then(value => {
       if (!value.invocation_id) throw new Error('Broker did not provide an invocation ID');

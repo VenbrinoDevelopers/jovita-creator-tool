@@ -1,20 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
-import { defineApp, provider, compileApp, defineRuntimeApp, defineSkillApp, commandTools, JovitaApp, JovitaTool } from '../dist/index.js';
+import { defineApp, provider, compileApp, defineRuntimeApp, defineSkillApp, commandTools, JovitaApp, JovitaTool, ToolContext, builtins } from '../dist/index.js';
+
+test('named provider calls require an explicit tool grant before broker transport', async () => {
+  assert.equal(builtins.openRouter.chatGenerate, 'openrouter.chat.generate');
+  const ctx = new ToolContext('example', 'lookup', []);
+  await assert.rejects(ctx.providers.openRouter.chatGenerate({ prompt: 'hello' }),
+    /no grant/);
+});
 
 test('command-backed defineApp retains CLI routing, grants, and storefront fields', () => {
   const app = defineApp({ id: 'leads', name: 'Leads', version: '1.0.0',
     category: 'sales', description: 'Find local businesses for outreach.',
     billing: { tier: 'free', entitlementKey: 'pack.leads' },
     tools: commandTools([{ id: 'find', argvPrefix: ['find'],
-      capabilities: ['google.places.text_search'], billingRequired: true,
+      capabilities: ['openrouter.chat.generate'], billingRequired: true,
       activity: { kind: 'search', object: 'leads' } }]),
     healthCheck: { command: 'leads', args: ['--help'], operationId: 'find' },
   });
   const manifest = compileApp(app);
   assert.equal(manifest.runtime.execute.command, 'leads');
-  assert.deepEqual(manifest.runtime.execute.operations[0].capabilities, ['google.places.text_search']);
+  assert.deepEqual(manifest.runtime.execute.operations[0].capabilities, ['openrouter.chat.generate']);
   assert.equal(manifest.billing.entitlementKey, 'pack.leads');
   assert.equal(manifest.runtime.execute.healthCheck.operationId, 'find');
   assert.throws(() => commandTools([{ id: 'find', argvPrefix: ['a'], capabilities: [], billingRequired: false },
@@ -25,17 +32,17 @@ test('concise command tools infer routing and billing and generate a free health
   const app = defineApp({ id: 'local-leads', name: 'Local Leads', version: '1.0.0',
     description: 'Find local customers.', billing: { tier: 'free', entitlementKey: 'pack.local_leads' },
     tools: commandTools({
-      search: { capabilities: ['google.places.text_search'] },
-      generate: { capabilities: ['serper.maps.search'] },
+      search: { capabilities: ['openrouter.chat.generate'] },
+      generate: { capabilities: ['openrouter.images.generate'] },
     }),
   });
   const manifest = compileApp(app);
   assert.deepEqual(manifest.runtime.execute.operations, [
     { id: 'offline', argvPrefix: [], excludedArgs: ['search', 'generate'],
       capabilities: [], billingRequired: false, activity: { kind: 'read', object: 'Local Leads information', icon: 'document' } },
-    { id: 'search', argvPrefix: ['search'], capabilities: ['google.places.text_search'], billingRequired: true,
+    { id: 'search', argvPrefix: ['search'], capabilities: ['openrouter.chat.generate'], billingRequired: true,
       activity: { kind: 'run', object: 'search', icon: 'command' } },
-    { id: 'generate', argvPrefix: ['generate'], capabilities: ['serper.maps.search'], billingRequired: true,
+    { id: 'generate', argvPrefix: ['generate'], capabilities: ['openrouter.images.generate'], billingRequired: true,
       activity: { kind: 'run', object: 'generate', icon: 'command' } },
   ]);
   assert.deepEqual(manifest.runtime.execute.healthCheck,
@@ -99,7 +106,7 @@ test('class apps can compose built-in operations without provider declarations',
   class ExistingTool extends JovitaTool {
     constructor() { super({ id: 'lookup', description: 'Find a place',
       input: z.object({ query: z.string() }), output: z.object({ name: z.string() }),
-      uses: [{ operation: 'google.places.text_search' }],
+      uses: [{ operation: 'openrouter.chat.generate' }],
       activity: { kind: 'search', object: 'place' } }); }
   }
   class ExistingApp extends JovitaApp {
@@ -110,7 +117,7 @@ test('class apps can compose built-in operations without provider declarations',
   const manifest = compileApp(new ExistingApp());
   assert.equal(manifest.broker, undefined);
   const tool = manifest.runtime.execute.operations.find(item => item.id === 'lookup');
-  assert.deepEqual(tool.capabilities, ['google.places.text_search']);
+  assert.deepEqual(tool.capabilities, ['openrouter.chat.generate']);
   assert.equal(tool.billingRequired, true);
 });
 
@@ -127,13 +134,15 @@ test('reused provider keeps one connection profile and separate prices', () => {
   assert.deepEqual(manifest.broker.providers[0].operations.map(item => item.buyerCredits), [5, 20]);
 });
 
-test('named runs and activity phases preserve the broker and AI contracts', () => {
-  const monid = provider({ name: 'Monid', baseUrl: 'https://api.monid.ai/v1/', auth: 'bearer' });
+test('generic submit and poll preserves the broker and AI contracts', () => {
+  const jobs = provider({ name: 'Jobs API', baseUrl: 'https://api.example.com/v1/', auth: 'bearer' });
   const app = defineApp({ id: 'lead-finder', name: 'Lead Finder', version: '1.0.0',
     compat: { serviceAliases: ['emailfinder'], executableAliases: ['emailfinder'] },
     tools: {
-      search: monid.post('/run', { description: 'Find qualified leads',
-        executionKind: 'named-run', providerName: 'sample', endpoint: '/search',
+      search: jobs.post('/jobs', { description: 'Find qualified leads',
+        executionKind: 'http-poll', poll: { path: '/jobs/{job_id}', jobIdField: 'runId',
+          statusField: 'status', resultField: 'output', successValue: 'COMPLETED',
+          failureValue: 'FAILED', intervalMs: 750, maxAttempts: 60 },
         input: z.object({ query: z.string() }), output: z.object({ leads: z.array(z.string()) }),
         creditsPerCall: 20,
         activity: { kind: 'search', object: 'leads', icon: 'search',
@@ -143,8 +152,8 @@ test('named runs and activity phases preserve the broker and AI contracts', () =
   });
   const manifest = compileApp(app);
   assert.equal(manifest.compat.serviceAliases[0], 'emailfinder');
-  assert.equal(manifest.broker.providers[0].operations[0].executionKind, 'named-run');
-  assert.equal(manifest.broker.providers[0].operations[0].providerName, 'sample');
+  assert.equal(manifest.broker.providers[0].operations[0].executionKind, 'http-poll');
+  assert.equal(manifest.broker.providers[0].operations[0].poll.jobIdField, 'runId');
   assert.equal(manifest.runtime.execute.operations[1].activity.phases.collecting.kind, 'read');
 });
 

@@ -1,0 +1,662 @@
+{
+  "schemaVersion": 1,
+  "revision": "1.0.0",
+  "providers": [
+    {
+      "id": "googleWorkspace",
+      "name": "Google Workspace",
+      "category": "productivity",
+      "docsUrl": "https://developers.google.com/workspace",
+      "operations": [
+        {
+          "reference": "google-workspace.command",
+          "provider": "googleWorkspace",
+          "method": "command",
+          "purpose": "google-workspace command",
+          "maxCallsPerInvocation": 2,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        }
+      ],
+      "brokerProviderId": "google-workspace",
+      "summary": "User authorized Google services.",
+      "baseUrl": "https://www.googleapis.com/",
+      "authMethod": "oauth",
+      "timeoutMs": 60000,
+      "providerCostNote": "The user grants access to their own Google account."
+    },
+    {
+      "id": "openRouter",
+      "name": "OpenRouter",
+      "category": "ai-models",
+      "docsUrl": "https://openrouter.ai/docs",
+      "operations": [
+        {
+          "reference": "openrouter.audio.transcribe",
+          "provider": "openRouter",
+          "method": "audioTranscribe",
+          "purpose": "openrouter audio transcribe",
+          "maxCallsPerInvocation": 16,
+          "executionKind": "http-json",
+          "contractVersion": 1,
+          "unit": "second",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760,
+          "route": {
+            "method": "POST",
+            "path": "audio/transcriptions"
+          }
+        },
+        {
+          "reference": "openrouter.chat.generate",
+          "provider": "openRouter",
+          "method": "chatGenerate",
+          "purpose": "openrouter chat generate",
+          "maxCallsPerInvocation": 8,
+          "executionKind": "http-sse",
+          "contractVersion": 1,
+          "unit": "token",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760,
+          "route": {
+            "method": "POST",
+            "path": "chat/completions"
+          }
+        },
+        {
+          "reference": "openrouter.images.generate",
+          "provider": "openRouter",
+          "method": "imagesGenerate",
+          "purpose": "openrouter images generate",
+          "maxCallsPerInvocation": 32,
+          "executionKind": "http-json",
+          "contractVersion": 1,
+          "unit": "image",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760,
+          "route": {
+            "method": "POST",
+            "path": "images"
+          }
+        },
+        {
+          "reference": "openrouter.images.model_endpoints.list",
+          "provider": "openRouter",
+          "method": "imagesModelEndpointsList",
+          "purpose": "openrouter images model endpoints list",
+          "maxCallsPerInvocation": 8,
+          "executionKind": "http-json",
+          "contractVersion": 1,
+          "unit": "result",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760,
+          "route": {
+            "method": "GET",
+            "path": "images/models/{model}/endpoints"
+          }
+        },
+        {
+          "reference": "openrouter.images.models.list",
+          "provider": "openRouter",
+          "method": "imagesModelsList",
+          "purpose": "openrouter images models list",
+          "maxCallsPerInvocation": 2,
+          "executionKind": "http-json",
+          "contractVersion": 1,
+          "unit": "result",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760,
+          "route": {
+            "method": "GET",
+            "path": "images/models"
+          }
+        },
+        {
+          "reference": "openrouter.models.list",
+          "provider": "openRouter",
+          "method": "modelsList",
+          "purpose": "openrouter models list",
+          "maxCallsPerInvocation": 2,
+          "executionKind": "http-json",
+          "contractVersion": 1,
+          "unit": "result",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760,
+          "route": {
+            "method": "GET",
+            "path": "models"
+          }
+        },
+        {
+          "reference": "openrouter.videos.models.list",
+          "provider": "openRouter",
+          "method": "videosModelsList",
+          "purpose": "openrouter videos models list",
+          "maxCallsPerInvocation": 2,
+          "executionKind": "http-json",
+          "contractVersion": 1,
+          "unit": "result",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760,
+          "route": {
+            "method": "GET",
+            "path": "videos/models"
+          }
+        }
+      ],
+      "brokerProviderId": "openrouter",
+      "summary": "Text, image, audio and video model routes.",
+      "baseUrl": "https://openrouter.ai/api/v1/",
+      "authMethod": "bearer",
+      "timeoutMs": 120000,
+      "providerCostNote": "Model usage varies by route and output size; Jovita shows the buyer reservation before each call."
+    },
+    {
+      "id": "recraft",
+      "name": "Recraft",
+      "category": "images",
+      "docsUrl": "https://www.recraft.ai/docs",
+      "operations": [
+        {
+          "reference": "recraft.images.remove_background",
+          "provider": "recraft",
+          "method": "imagesRemoveBackground",
+          "purpose": "recraft images remove background",
+          "maxCallsPerInvocation": 32,
+          "executionKind": "http-multipart",
+          "contractVersion": 1,
+          "unit": "image",
+          "maxRequestBytes": 7340032,
+          "maxResponseBytes": 10485760,
+          "route": {
+            "method": "POST",
+            "path": "/images/removeBackground",
+            "credentialScope": "pack",
+            "mediaPreset": "transparent-png-v1",
+            "requestLimitBytes": 8000000,
+            "evidenceCostMicros": 10000
+          }
+        }
+      ],
+      "brokerProviderId": "recraft",
+      "summary": "Image editing operations.",
+      "baseUrl": "https://external.api.recraft.ai/v1/",
+      "authMethod": "bearer",
+      "timeoutMs": 120000,
+      "providerCostNote": "Recraft bills the configured account for image processing."
+    },
+    {
+      "id": "jovitaHosting",
+      "name": "Jovita Hosting",
+      "category": "hosting",
+      "docsUrl": "https://developers.cloudflare.com/",
+      "operations": [
+        {
+          "reference": "jovita.hosting.browser.audit",
+          "provider": "jovitaHosting",
+          "method": "browserAudit",
+          "purpose": "jovita hosting browser audit",
+          "maxCallsPerInvocation": 3,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.domain.attach",
+          "provider": "jovitaHosting",
+          "method": "domainAttach",
+          "purpose": "jovita hosting domain attach",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.domain.remove",
+          "provider": "jovitaHosting",
+          "method": "domainRemove",
+          "purpose": "jovita hosting domain remove",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.domain.status",
+          "provider": "jovitaHosting",
+          "method": "domainStatus",
+          "purpose": "jovita hosting domain status",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.form.upsert",
+          "provider": "jovitaHosting",
+          "method": "formUpsert",
+          "purpose": "jovita hosting form upsert",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.preview.create",
+          "provider": "jovitaHosting",
+          "method": "previewCreate",
+          "purpose": "jovita hosting preview create",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.preview.delete",
+          "provider": "jovitaHosting",
+          "method": "previewDelete",
+          "purpose": "jovita hosting preview delete",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.preview.finalize",
+          "provider": "jovitaHosting",
+          "method": "previewFinalize",
+          "purpose": "jovita hosting preview finalize",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.release.abort",
+          "provider": "jovitaHosting",
+          "method": "releaseAbort",
+          "purpose": "jovita hosting release abort",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.release.create",
+          "provider": "jovitaHosting",
+          "method": "releaseCreate",
+          "purpose": "jovita hosting release create",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.release.finalize",
+          "provider": "jovitaHosting",
+          "method": "releaseFinalize",
+          "purpose": "jovita hosting release finalize",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.release.health",
+          "provider": "jovitaHosting",
+          "method": "releaseHealth",
+          "purpose": "jovita hosting release health",
+          "maxCallsPerInvocation": 2,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.release.list",
+          "provider": "jovitaHosting",
+          "method": "releaseList",
+          "purpose": "jovita hosting release list",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.release.lookup",
+          "provider": "jovitaHosting",
+          "method": "releaseLookup",
+          "purpose": "jovita hosting release lookup",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.release.promote",
+          "provider": "jovitaHosting",
+          "method": "releasePromote",
+          "purpose": "jovita hosting release promote",
+          "maxCallsPerInvocation": 2,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.release.rollback",
+          "provider": "jovitaHosting",
+          "method": "releaseRollback",
+          "purpose": "jovita hosting release rollback",
+          "maxCallsPerInvocation": 2,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.site.lookup",
+          "provider": "jovitaHosting",
+          "method": "siteLookup",
+          "purpose": "jovita hosting site lookup",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.site.reserve",
+          "provider": "jovitaHosting",
+          "method": "siteReserve",
+          "purpose": "jovita hosting site reserve",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.submission.export",
+          "provider": "jovitaHosting",
+          "method": "submissionExport",
+          "purpose": "jovita hosting submission export",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.submission.list",
+          "provider": "jovitaHosting",
+          "method": "submissionList",
+          "purpose": "jovita hosting submission list",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.hosting.visual.snapshot",
+          "provider": "jovitaHosting",
+          "method": "visualSnapshot",
+          "purpose": "jovita hosting visual snapshot",
+          "maxCallsPerInvocation": 3,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        }
+      ],
+      "brokerProviderId": "jovita-hosting",
+      "summary": "Website hosting and deployment operations.",
+      "baseUrl": "https://api.cloudflare.com/client/v4/",
+      "authMethod": "service",
+      "timeoutMs": 120000,
+      "providerCostNote": "Hosting resources and deployment work can have different costs."
+    },
+    {
+      "id": "jovitaMedia",
+      "name": "Jovita Media",
+      "category": "media",
+      "docsUrl": "",
+      "operations": [
+        {
+          "reference": "jovita.media.cancel",
+          "provider": "jovitaMedia",
+          "method": "cancel",
+          "purpose": "jovita media cancel",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.media.download",
+          "provider": "jovitaMedia",
+          "method": "download",
+          "purpose": "jovita media download",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.media.persist-result",
+          "provider": "jovitaMedia",
+          "method": "persistResult",
+          "purpose": "jovita media persist-result",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.media.quote",
+          "provider": "jovitaMedia",
+          "method": "quote",
+          "purpose": "jovita media quote",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.media.status",
+          "provider": "jovitaMedia",
+          "method": "status",
+          "purpose": "jovita media status",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.media.submit",
+          "provider": "jovitaMedia",
+          "method": "submit",
+          "purpose": "jovita media submit",
+          "maxCallsPerInvocation": 4,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.media.voices",
+          "provider": "jovitaMedia",
+          "method": "voices",
+          "purpose": "jovita media voices",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        }
+      ],
+      "brokerProviderId": "jovita-media",
+      "summary": "Media jobs, quotes, status and downloads.",
+      "baseUrl": "",
+      "authMethod": "internal",
+      "timeoutMs": 120000,
+      "providerCostNote": "Media jobs reserve a maximum and settle from measured provider evidence."
+    },
+    {
+      "id": "voiceLibrary",
+      "name": "Voice Library",
+      "category": "voice",
+      "docsUrl": "",
+      "operations": [
+        {
+          "reference": "jovita.voice-library.delete",
+          "provider": "voiceLibrary",
+          "method": "delete",
+          "purpose": "jovita voice-library delete",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.voice-library.list",
+          "provider": "voiceLibrary",
+          "method": "list",
+          "purpose": "jovita voice-library list",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.voice-library.rename",
+          "provider": "voiceLibrary",
+          "method": "rename",
+          "purpose": "jovita voice-library rename",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.voice-library.save",
+          "provider": "voiceLibrary",
+          "method": "save",
+          "purpose": "jovita voice-library save",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        },
+        {
+          "reference": "jovita.voice-library.show",
+          "provider": "voiceLibrary",
+          "method": "show",
+          "purpose": "jovita voice-library show",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760
+        }
+      ],
+      "brokerProviderId": "jovita-voice-library",
+      "summary": "Store and manage private voice references.",
+      "baseUrl": "",
+      "authMethod": "internal",
+      "timeoutMs": 60000,
+      "providerCostNote": "Library management does not use a third-party API key."
+    },
+    {
+      "id": "cloudflare",
+      "name": "Cloudflare",
+      "category": "browser",
+      "docsUrl": "https://developers.cloudflare.com/browser-rendering/",
+      "operations": [
+        {
+          "reference": "cloudflare.browser.capture_product.v1",
+          "provider": "cloudflare",
+          "method": "captureProduct",
+          "purpose": "cloudflare browser capture product v1",
+          "maxCallsPerInvocation": 1,
+          "executionKind": "lifecycle",
+          "legacyAliases": [
+            "jovita.product.capture"
+          ],
+          "contractVersion": 1,
+          "unit": "request",
+          "maxRequestBytes": 524288,
+          "maxResponseBytes": 10485760,
+          "legacyProviderIds": {
+            "jovita.product.capture": "jovita-product-capture"
+          }
+        }
+      ],
+      "brokerProviderId": "cloudflare",
+      "summary": "Direct Cloudflare Browser Rendering operations.",
+      "baseUrl": "https://api.cloudflare.com/client/v4/",
+      "authMethod": "bearer",
+      "timeoutMs": 90000,
+      "providerCostNote": "Cloudflare bills your own account for Browser Rendering."
+    }
+  ]
+}

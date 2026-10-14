@@ -11,6 +11,7 @@ import { connectCommand } from './commands/connect.js';
 import { submitCommand } from './commands/submit.js';
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/login.js';
 import { syncCommand } from './commands/sync.js';
+import { providersCommand } from './commands/providers.js';
 
 const program = new Command();
 
@@ -29,5 +30,6 @@ program.addCommand(loginCommand);
 program.addCommand(logoutCommand);
 program.addCommand(whoamiCommand);
 program.addCommand(syncCommand);
+program.addCommand(providersCommand);
 
 await program.parseAsync();

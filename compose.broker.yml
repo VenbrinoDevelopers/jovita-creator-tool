@@ -1,0 +1,31 @@
+services:
+  broker:
+    build:
+      context: .
+      dockerfile: packages/broker/Dockerfile
+    ports:
+      - "127.0.0.1:${BROKER_BIND_PORT:-19091}:19091"
+    environment:
+      DATABASE_URL: mongodb://mongo:27017
+      DATABASE_NAME: jovita_broker
+      REDIS_URL: redis://redis:6379
+      JOVITA_BROKER_SHARED_SECRET: ${JOVITA_BROKER_SHARED_SECRET:?set a 32-character random secret}
+      JOVITA_DATA_ENCRYPTION_KEY: ${JOVITA_DATA_ENCRYPTION_KEY:?set a separate 32-character random key}
+    depends_on:
+      mongo: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  mongo:
+    image: mongo:8
+    volumes: [broker-mongo:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+volumes:
+  broker-mongo:
