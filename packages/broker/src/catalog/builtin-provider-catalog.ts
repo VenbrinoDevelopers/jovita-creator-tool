@@ -15,6 +15,10 @@ export const BUILTIN_PROVIDER_CATALOG = [
   })),
   { ...providerCatalog.providers.find(provider => provider.id === 'cloudflare')!,
     profileId: 'jovita-product-capture', name: 'Product Capture' },
+  { profileId: 'elevenlabs', name: 'ElevenLabs', category: 'voice',
+    summary: 'Voice and audio generation.', docsUrl: 'https://elevenlabs.io/docs',
+    baseUrl: 'https://api.elevenlabs.io/', authMethod: 'header', timeoutMs: 120_000,
+    providerCostNote: 'Audio routes can bill by seconds or provider credits.' },
 ];
 
 export function builtinProviderBaseUrl(profileId: string): string {

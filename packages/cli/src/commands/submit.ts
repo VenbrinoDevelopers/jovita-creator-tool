@@ -48,6 +48,7 @@ export const submitCommand = new Command('submit')
           if (catalog.grants.some(grant => grant.packId === appId && grant.capabilityId === row.capabilityId && grant.status === 'active')) continue;
           await api.request(`/creator/tools/${encodeURIComponent(appId)}/providers/grants`, 'POST', {
             connectionId: connections[0]!.connectionId, capabilityId: row.capabilityId,
+            releaseId: release.id,
           });
         }
       }
