@@ -54,9 +54,7 @@ export class BrokerHttpTransport {
     await this.assertPublicHost(base.hostname);
     const { url, body: mappedBody } = this.mapRequest(base, operation, payload);
     const body = operation.mediaPreset ? await prepareMediaRequest(operation.mediaPreset, payload)
-      : operation.requestMapping ? this.mappedBody(operation.requestMapping, payload)
-        : operation.executionKind === 'named-run'
-          ? { provider: operation.providerName, endpoint: operation.endpoint, input: payload } : mappedBody;
+      : operation.requestMapping ? this.mappedBody(operation.requestMapping, payload) : mappedBody;
     if (url.origin !== base.origin) throw new ForbiddenException('Operation host changed');
     const key = this.crypto.decrypt(connection.encryptedApiKey);
     const headers: Record<string, string> = { accept: operation.executionKind === 'http-sse'
@@ -108,7 +106,7 @@ export class BrokerHttpTransport {
         throw new BadGatewayException({ code: 'PROVIDER_REJECTED', message: `Provider returned HTTP ${response.status}` });
       }
       if (!size) {
-        if (operation.executionKind === 'http-poll' || operation.executionKind === 'named-run') throw new ProviderOutcomeUnknownError('Provider accepted a job without a readable run ID');
+        if (operation.executionKind === 'http-poll') throw new ProviderOutcomeUnknownError('Provider accepted a job without a readable run ID');
         if (operation.emptyResultIsNoResult) return {};
         throw new BadGatewayException({ code: 'PROVIDER_EMPTY_RESPONSE', message: 'Provider returned no result' });
       }

@@ -90,7 +90,7 @@ export class BrokerCatalogService implements OnModuleInit {
       const operations: Array<Partial<BrokerOperation>> = [];
       for (const [operationIndex, item] of provider.operations.entries()) {
         const definition = this.rules.objectWithKeys(item, ['id', 'version', 'name', 'purpose', 'method', 'path',
-          'executionKind', 'providerName', 'endpoint', 'mediaPreset', 'requestMapping', 'responseField',
+          'executionKind', 'mediaPreset', 'requestMapping', 'responseField',
           'queryFields', 'inputSchema', 'outputSchema', 'buyerCredits', 'maxRequestBytes', 'maxResponseBytes',
           'providerCostNote', 'emptyResultIsNoResult', 'poll', 'artifact'], `broker.providers[${index}].operations[${operationIndex}]`);
         const operationId = this.rules.id(definition.id, 'operation id');
@@ -106,8 +106,6 @@ export class BrokerCatalogService implements OnModuleInit {
           executionKind: definition.executionKind as BrokerOperation['executionKind'] | undefined,
           poll: definition.poll as BrokerOperation['poll'] | undefined,
           artifact: definition.artifact as BrokerOperation['artifact'] | undefined,
-          providerName: definition.providerName as string | undefined,
-          endpoint: definition.endpoint as string | undefined,
           mediaPreset: definition.mediaPreset as BrokerOperation['mediaPreset'] | undefined,
           requestMapping: definition.requestMapping as BrokerOperation['requestMapping'] | undefined,
           responseField: definition.responseField as string | undefined,
@@ -147,13 +145,12 @@ export class BrokerCatalogService implements OnModuleInit {
         const existing = await this.operations.findOne({ capabilityId }).lean();
         if (existing) {
           const comparable = ['creatorId', 'profileId', 'operationId', 'version', 'name', 'purpose', 'method',
-            'path', 'executionKind', 'poll', 'artifact', 'providerName', 'endpoint', 'mediaPreset', 'requestMapping', 'responseField',
+            'path', 'executionKind', 'poll', 'artifact', 'mediaPreset', 'requestMapping', 'responseField',
             'inputSchema', 'outputSchema', 'queryFields', 'buyerCredits', 'maxRequestBytes',
             'maxResponseBytes', 'providerCostNote', 'emptyResultIsNoResult'] as const;
           const expected = { ...operation, creatorId, executionKind: operation.executionKind ?? 'http-json',
             poll: operation.executionKind === 'http-poll'
-              ? this.rules.pollDefinition(operation.poll, String(operation.method))
-              : operation.executionKind === 'named-run' ? this.execution.namedRunPoll() : undefined,
+              ? this.rules.pollDefinition(operation.poll, String(operation.method)) : undefined,
             artifact: operation.artifact === undefined ? undefined
               : this.rules.artifactDefinition(operation.artifact, operation.executionKind ?? 'http-json'),
             queryFields: operation.queryFields ?? [],
@@ -161,9 +158,7 @@ export class BrokerCatalogService implements OnModuleInit {
             maxResponseBytes: operation.maxResponseBytes ?? 1_048_576,
             emptyResultIsNoResult: operation.emptyResultIsNoResult ?? false };
           if (!comparable.every(field => isDeepStrictEqual(
-            plain(field === 'emptyResultIsNoResult' ? existing[field] ?? false
-              : field === 'poll' && existing.executionKind === 'named-run'
-                ? existing.poll ?? this.execution.namedRunPoll() : existing[field]),
+            plain(field === 'emptyResultIsNoResult' ? existing[field] ?? false : existing[field]),
             plain(expected[field])))) {
             throw new ConflictException(`Manifest operation ${capabilityId} differs from its saved version`);
           }
@@ -217,7 +212,7 @@ export class BrokerCatalogService implements OnModuleInit {
       throw new BadRequestException('Operation route must be a fixed path with optional named segments');
     }
     const executionKind = body.executionKind ?? 'http-json';
-    if (!['http-json', 'http-multipart', 'http-binary', 'http-sse', 'http-poll', 'named-run'].includes(executionKind)) {
+    if (!['http-json', 'http-multipart', 'http-binary', 'http-sse', 'http-poll'].includes(executionKind)) {
       throw new BadRequestException('Invalid operation executionKind');
     }
     if (['http-multipart', 'http-binary'].includes(executionKind) && method === 'GET') {
@@ -228,25 +223,9 @@ export class BrokerCatalogService implements OnModuleInit {
       || executionKind !== 'http-multipart' || method !== 'POST')) {
       throw new BadRequestException('Media preset requires a multipart POST');
     }
-    const poll = executionKind === 'http-poll' ? this.rules.pollDefinition(body.poll, method)
-      : executionKind === 'named-run' ? this.execution.namedRunPoll() : undefined;
+    const poll = executionKind === 'http-poll' ? this.rules.pollDefinition(body.poll, method) : undefined;
     const artifact = body.artifact === undefined ? undefined : this.rules.artifactDefinition(body.artifact, executionKind);
     if (executionKind !== 'http-poll' && body.poll !== undefined) throw new BadRequestException('Poll settings require http-poll');
-    let providerName: string | undefined;
-    let endpoint: string | undefined;
-    if (executionKind === 'named-run') {
-      if (profile.authMethod !== 'bearer' || method !== 'POST' || path !== '/run') {
-        throw new BadRequestException('Named-run operations require bearer authentication and POST /run');
-      }
-      providerName = String(body.providerName ?? '');
-      endpoint = String(body.endpoint ?? '');
-      if (!/^[a-z][a-z0-9_-]{0,63}$/.test(providerName)
-        || (endpoint !== '/' && (!SAFE_PATH.test(endpoint) || endpoint.includes('..')))) {
-        throw new BadRequestException('Invalid named route');
-      }
-    } else if (body.providerName !== undefined || body.endpoint !== undefined) {
-      throw new BadRequestException('Named route fields require the named-run execution kind');
-    }
     const inputSchema = this.rules.schema(body.inputSchema, true);
     const outputSchema = this.rules.schema(body.outputSchema, false);
     const requestMapping = body.requestMapping === undefined ? undefined
@@ -283,7 +262,7 @@ export class BrokerCatalogService implements OnModuleInit {
     const capabilityId = `creator.${profile.profileId}.${operationId}.v${version}`;
     return this.operations.create({ capabilityId, profileId: profile.profileId, creatorId, operationId,
       version, name: this.rules.text(body.name, 100), purpose: this.rules.text(body.purpose, 500), method, path,
-      executionKind, poll, artifact, providerName, endpoint, mediaPreset, requestMapping, responseField,
+      executionKind, poll, artifact, mediaPreset, requestMapping, responseField,
       inputSchema, outputSchema, queryFields, buyerCredits, maxRequestBytes, maxResponseBytes,
       emptyResultIsNoResult: body.emptyResultIsNoResult ?? false,
       providerCostNote: this.rules.text(body.providerCostNote, 500) });

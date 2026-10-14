@@ -7,7 +7,7 @@ import { SecretCryptoService } from '../security/secret-crypto.service.js';
 import type { UploadsService, MediaProcessingService, MiniappProviderCredentialService } from '../contracts/platform-ports.js';
 import { ProviderOutcomeUnknownError, type CapabilityCallInput, type CapabilityCallResult } from '../contracts/capability.js';
 import { BrokerConnection, type BrokerExecutionDocument, type BrokerOperationDocument,
-  type BrokerProviderProfileDocument, type BrokerProviderProfile, type BrokerOperation } from '../catalog/broker-catalog.schema.js';
+  type BrokerProviderProfileDocument, type BrokerProviderProfile } from '../catalog/broker-catalog.schema.js';
 import { BuiltinOperationCatalog, type BuiltinOperationDefinition } from '../catalog/builtin-operation.catalog.js';
 import { BrokerHttpTransport } from './broker-http-transport.js';
 import { BrokerArtifactService } from './broker-artifact.service.js';
@@ -27,7 +27,7 @@ export class BrokerExecutionService {
     private readonly crypto: SecretCryptoService,
     private readonly transport: BrokerHttpTransport,
     private readonly adminCredentials?: MiniappProviderCredentialService,
-    private readonly builtinCatalog?: BuiltinOperationCatalog,
+    _builtinCatalog?: BuiltinOperationCatalog,
     uploads?: UploadsService,
     processing?: MediaProcessingService,
   ) {
@@ -87,16 +87,11 @@ export class BrokerExecutionService {
     if (!evidence.upstreamRunId || !evidence.encryptedCredential) return { status: 'pending' };
     let profile: BrokerProviderProfile;
     let operation: RuntimeOperationPlan;
-    const builtin = this.builtinCatalog?.find(input.capability);
-    if (builtin && builtin.executionKind === 'named-run') {
-      ({ profile, operation } = builtinExternalPlan(builtin));
-    } else {
-      const creator = await this.operationFor(input.capability, input.packId);
-      if (!creator || !this.isAsync(creator)) return { status: 'pending' };
-      profile = await this.requireProfile(creator.profileId);
-      if (profile.status !== 'approved') return { status: 'pending' };
-      operation = creator;
-    }
+    const creator = await this.operationFor(input.capability, input.packId);
+    if (!creator || !this.isAsync(creator)) return { status: 'pending' };
+    profile = await this.requireProfile(creator.profileId);
+    if (profile.status !== 'approved') return { status: 'pending' };
+    operation = creator;
     const connection = { encryptedApiKey: evidence.encryptedCredential } as BrokerConnection;
     try {
       const result = await this.finishExecution(executionKey, evidence.requestHash, operation,
@@ -216,16 +211,15 @@ export class BrokerExecutionService {
   }
 
   private isAsync(operation: RuntimeOperationPlan): boolean {
-    return operation.executionKind === 'http-poll' || operation.executionKind === 'named-run';
+    return operation.executionKind === 'http-poll';
   }
 
   async executeOperation(profile: BrokerProviderProfile, connection: BrokerConnection,
     operation: RuntimeOperationPlan, payload: Record<string, unknown>, executionKey?: string,
     ownerId?: string): Promise<BrokerExecutionResult> {
     if (this.isAsync(operation)) {
-      const submitted = await this.transport.providerRequest(profile, connection, operation, payload, undefined,
-        operation.executionKind === 'named-run' ? [400, 402, 404, 422, 429] : undefined);
-      const poll = operation.executionKind === 'named-run' ? this.namedRunPoll() : operation.poll!;
+      const submitted = await this.transport.providerRequest(profile, connection, operation, payload);
+      const poll = operation.poll!;
       const jobId = this.transport.readField(submitted, poll.jobIdField);
       if (typeof jobId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(jobId)) {
         const status = Number((submitted as Record<string, unknown>).__httpStatus);
@@ -255,7 +249,7 @@ export class BrokerExecutionService {
   private async pollOperation(profile: BrokerProviderProfile, connection: BrokerConnection,
     operation: RuntimeOperationPlan, jobId: string, submitted?: unknown,
     singleAttempt = false, context?: { ownerId?: string; executionKey?: string }): Promise<BrokerExecutionResult> {
-    const poll = operation.executionKind === 'named-run' ? this.namedRunPoll() : operation.poll!;
+    const poll = operation.poll!;
     const deadline = Date.now() + 150_000;
     const inspect = async (state: unknown): Promise<BrokerExecutionResult | undefined> => {
       const status = String(this.transport.readField(state, poll.statusField) ?? '').toUpperCase();
@@ -271,13 +265,11 @@ export class BrokerExecutionService {
         ? this.transport.readField(row, poll.providerStatusField) ?? 200
         : (row.providerResponse as Record<string, unknown> | undefined)?.httpStatus
           ?? row.__httpStatus ?? 200);
-      const noResult = poll.noResultStatuses?.includes(providerStatus)
-        || (operation.executionKind === 'named-run' && providerStatus === 404);
+      const noResult = poll.noResultStatuses?.includes(providerStatus) ?? false;
       if (!Number.isSafeInteger(providerStatus) || providerStatus < 100 || providerStatus > 599) {
         throw new BadGatewayException('Provider returned an invalid result status');
       }
-      if (providerStatus >= 400 && !noResult
-        && (poll.providerStatusField || operation.executionKind === 'named-run')) {
+      if (providerStatus >= 400 && !noResult && poll.providerStatusField) {
         throw this.providerStatusError(providerStatus);
       }
       const artifact = operation.artifact
@@ -310,7 +302,7 @@ export class BrokerExecutionService {
       let state: unknown;
       try { state = await this.transport.providerRequest(profile, connection, pollOperation, { job_id: jobId },
         singleAttempt ? 20_000 : Math.max(1, deadline - Date.now()),
-        operation.executionKind === 'named-run' ? [400, 402, 404, 422, 429] : undefined); }
+        undefined); }
       catch { throw new ProviderOutcomeUnknownError('Provider job state could not be confirmed'); }
       const terminal = await inspect(state);
       if (terminal) return terminal;
@@ -347,11 +339,6 @@ export class BrokerExecutionService {
       // reservation so storage or network interruptions can be reconciled.
       throw new ProviderOutcomeUnknownError('Provider completed, but media delivery needs reconciliation', error);
     }
-  }
-
-  namedRunPoll(): BrokerOperation['poll'] {
-    return { path: '/runs/{job_id}', jobIdField: 'runId', statusField: 'status',
-      resultField: 'output', successValue: 'COMPLETED', failureValue: 'FAILED', intervalMs: 750, maxAttempts: 60 };
   }
 
   private providerStatusError(status: number): HttpException {

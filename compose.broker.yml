@@ -12,8 +12,23 @@ services:
       JOVITA_BROKER_SHARED_SECRET: ${JOVITA_BROKER_SHARED_SECRET:?set a 32-character random secret}
       JOVITA_DATA_ENCRYPTION_KEY: ${JOVITA_DATA_ENCRYPTION_KEY:?set a separate 32-character random key}
     depends_on:
-      mongo: { condition: service_healthy }
+      catalog-seed: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:19091/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  catalog-seed:
+    build:
+      context: .
+      dockerfile: packages/broker/Dockerfile
+    command: ["node", "packages/broker/dist/migrations/seed-public-catalog.js"]
+    environment:
+      DATABASE_URL: mongodb://mongo:27017
+      DATABASE_NAME: jovita_broker
+    depends_on:
+      mongo: { condition: service_healthy }
   mongo:
     image: mongo:8
     volumes: [broker-mongo:/data/db]

@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import type { HydratedDocument } from 'mongoose';
 
 /** Published contracts live in MongoDB. This collection is never creator writable. */
-@Schema({ collection: 'broker_builtin_operations', timestamps: true })
+@Schema({ collection: 'broker_builtin_operations_public', timestamps: true })
 export class BrokerBuiltinOperation {
   @Prop({ type: String, required: true, unique: true }) capability!: string;
   @Prop({ type: String, required: true, index: true }) providerId!: string;

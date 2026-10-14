@@ -5,6 +5,7 @@ import { BrokerBuiltinOperation, type BrokerBuiltinOperationDocument } from './b
 import { BrokerCatalogRevision, type BrokerCatalogRevisionDocument } from './builtin-catalog-revision.schema.js';
 import { builtinCatalogDigest } from './builtin-catalog-digest.js';
 import { BUILTIN_PROVIDER_CATALOG } from './builtin-provider-catalog.js';
+import { builtinOperationDefinitions } from '@jovita-ai/provider-catalog';
 
 export type BuiltinOperationDefinition = Readonly<{
   capability: string;
@@ -30,8 +31,9 @@ export class BuiltinOperationCatalog {
   async load(): Promise<readonly BuiltinOperationDefinition[]> {
     const rows = await this.model.find({}).lean();
     if (!rows.length) throw new ServiceUnavailableException('Built-in operation catalog is empty; run the catalog migration');
-    const revision = await this.revisions.findOne({ key: 'builtins' }).lean();
-    if (!revision || revision.count !== rows.length || revision.digest !== builtinCatalogDigest(rows)) {
+    const revision = await this.revisions.findOne({ key: 'public-catalog-v1' }).lean();
+    if (!revision || revision.count !== rows.length || revision.digest !== builtinCatalogDigest(rows)
+      || revision.digest !== builtinCatalogDigest(builtinOperationDefinitions)) {
       throw new ServiceUnavailableException('Built-in operation catalog is incomplete or has changed since migration');
     }
     const next = new Map<string, BuiltinOperationDefinition>();
@@ -58,7 +60,7 @@ export class BuiltinOperationCatalog {
       || contractVersion !== 1
       || !['request', 'result', 'token', 'image', 'byte', 'second', 'provider_credit'].includes(unit)
       || !Number.isSafeInteger(maxCallsPerInvocation) || maxCallsPerInvocation < 1
-      || !['lifecycle', 'http-json', 'named-run', 'http-sse', 'http-multipart'].includes(executionKind)
+      || !['lifecycle', 'http-json', 'http-sse', 'http-multipart'].includes(executionKind)
       || !Number.isSafeInteger(maxRequestBytes) || maxRequestBytes < 1
       || !Number.isSafeInteger(maxResponseBytes) || maxResponseBytes < 1) {
       throw new Error(`Invalid built-in operation catalog row: ${String(capability)}`);
@@ -66,20 +68,14 @@ export class BuiltinOperationCatalog {
     if (executionKind !== 'lifecycle' && (!route || typeof route !== 'object')) {
       throw new Error(`Built-in operation has no route: ${capability}`);
     }
-    if (executionKind === 'named-run') {
-      if (typeof route?.provider !== 'string'
-        || !/^[a-z][a-z0-9_-]{1,63}$/.test(route.provider)
-        || typeof route.endpoint !== 'string' || !/^\/[a-zA-Z0-9/{}_\-]{1,160}$/.test(route.endpoint)) {
-        throw new Error(`Invalid named-run route: ${capability}`);
-      }
-    } else if (executionKind !== 'lifecycle') {
+    if (executionKind !== 'lifecycle') {
       if (!['GET', 'POST'].includes(String(route?.method)) || typeof route?.path !== 'string'
         || !/^(?:\/?[a-zA-Z0-9._:-]+)(?:\/(?:[a-zA-Z0-9._:-]+|\{model\}))*$/.test(route.path)
         || route.path.includes('..') || route.path.includes('://')) {
         throw new Error(`Invalid approved HTTP route: ${capability}`);
       }
     }
-    if (executionKind === 'named-run' || executionKind === 'http-multipart') {
+    if (executionKind === 'http-multipart') {
       const profile = BUILTIN_PROVIDER_CATALOG.find(item => item.profileId === providerId);
       if (!profile?.baseUrl || !['bearer', 'header'].includes(profile.authMethod)
         || !['environment', 'pack'].includes(String(route?.credentialScope))

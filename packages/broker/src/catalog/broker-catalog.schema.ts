@@ -32,8 +32,8 @@ export class BrokerOperation {
   @Prop({ type: String, required: true }) purpose!: string;
   @Prop({ type: String, required: true, enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] }) method!: string;
   @Prop({ type: String, required: true }) path!: string;
-  @Prop({ type: String, required: true, enum: ['http-json', 'http-multipart', 'http-binary', 'http-sse', 'http-poll', 'named-run'], default: 'http-json' })
-  executionKind!: 'http-json' | 'http-multipart' | 'http-binary' | 'http-sse' | 'http-poll' | 'named-run';
+  @Prop({ type: String, required: true, enum: ['http-json', 'http-multipart', 'http-binary', 'http-sse', 'http-poll'], default: 'http-json' })
+  executionKind!: 'http-json' | 'http-multipart' | 'http-binary' | 'http-sse' | 'http-poll';
   @Prop({ type: String, enum: ['transparent-png-v1'] }) mediaPreset?: 'transparent-png-v1';
   @Prop({ type: Object }) requestMapping?: { body: Record<string, { from: string } | { const: string | number | boolean }> };
   @Prop({ type: String }) responseField?: string;
@@ -43,8 +43,6 @@ export class BrokerOperation {
     intervalMs: number; maxAttempts: number };
   @Prop({ type: Object }) artifact?: { path: string; kind: 'video' | 'audio';
     maxBytes: number; retentionSeconds: number; timeoutMs?: number };
-  @Prop({ type: String }) providerName?: string;
-  @Prop({ type: String }) endpoint?: string;
   @Prop({ type: [String], default: [] }) queryFields!: string[];
   @Prop({ type: Object, required: true }) inputSchema!: Record<string, unknown>;
   @Prop({ type: Object, required: true }) outputSchema!: Record<string, unknown>;

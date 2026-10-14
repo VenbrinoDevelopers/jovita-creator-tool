@@ -6,7 +6,7 @@ import { BUILTIN_PROVIDER_CATALOG } from '../catalog/builtin-provider-catalog.js
 /** The execution contract shared by creator records and reviewed built-in records. */
 export type RuntimeOperationPlan = Pick<BrokerOperation, 'capabilityId' | 'executionKind' | 'method' | 'path'
   | 'queryFields' | 'inputSchema' | 'outputSchema' | 'maxRequestBytes' | 'maxResponseBytes'
-  | 'emptyResultIsNoResult' | 'poll' | 'providerName' | 'endpoint' | 'mediaPreset'
+  | 'emptyResultIsNoResult' | 'poll' | 'mediaPreset'
   | 'requestMapping' | 'responseField' | 'artifact'>
   & { evidenceCostMicros?: number };
 
@@ -41,12 +41,7 @@ export function builtinExternalPlan(definition: BuiltinOperationDefinition): {
     maxResponseBytes: definition.maxResponseBytes, emptyResultIsNoResult: false,
   };
   let operation: RuntimeOperationPlan;
-  if (definition.executionKind === 'named-run') {
-    operation = { ...common, executionKind: 'named-run', method: 'POST', path: '/run',
-      providerName: String(route.provider), endpoint: String(route.endpoint), outputSchema: {},
-      requestMapping: { body: { provider: { const: String(route.provider) },
-        endpoint: { const: String(route.endpoint) }, input: { from: '$' } } } };
-  } else if (definition.executionKind === 'http-multipart') {
+  if (definition.executionKind === 'http-multipart') {
     if (route.mediaPreset !== 'transparent-png-v1') {
       throw new Error(`Built-in multipart operation has no reviewed media preset: ${definition.capability}`);
     }

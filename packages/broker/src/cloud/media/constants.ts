@@ -1,0 +1,48 @@
+export const IMAGE_MIME_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+]);
+
+export const FILE_TEXT_MIME_TYPES = new Set([
+    'text/plain',
+    'text/markdown',
+    'text/html',
+    'text/csv',
+    'application/json',
+    'application/yaml',
+    'text/yaml',
+    'text/x-yaml',
+]);
+
+export const FILE_EXT_TO_MIME: Record<string, string> = {
+    '.txt': 'text/plain',
+    '.md': 'text/markdown',
+    '.markdown': 'text/markdown',
+    '.csv': 'text/csv',
+    '.json': 'application/json',
+    '.yaml': 'application/yaml',
+    '.yml': 'application/yaml',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.heic': 'image/heic',
+    '.heif': 'image/heif',
+    '.tif': 'image/tiff',
+    '.tiff': 'image/tiff',
+    '.bmp': 'image/bmp',
+    '.svg': 'image/svg+xml',
+    '.pdf': 'application/pdf',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    '.xls': 'application/vnd.ms-excel',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.html': 'text/html',
+    '.htm': 'text/html',
+    '.tsv': 'text/tab-separated-values',
+};

@@ -47,11 +47,11 @@ jobs:
           test "$(node packages/cli/dist/index.js --version)" = "$(node -p "require('./packages/cli/package.json').version")"
       - run: npm run typecheck
       - run: npm test
-      - name: Publish runtime, SDK, then CLI
+      - name: Publish runtime, catalog, SDK, then CLI
         shell: bash
         run: |
           set -euo pipefail
-          for package in runtime sdk cli; do
+          for package in runtime provider-catalog sdk cli; do
             name="$(node -p "require('./packages/$package/package.json').name")"
             version="$(node -p "require('./packages/$package/package.json').version")"
             if npm view "$name@$version" version --registry=https://registry.npmjs.org/ > /tmp/npm-version.out 2> /tmp/npm-version.err; then

@@ -5,13 +5,18 @@
   "license": "MIT",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.19.0" },
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "catalog:seed": "node dist/migrations/seed-public-catalog.js",
     "start": "node dist/main.js",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
+    "@aws-sdk/s3-request-presigner": "^3.1152.0",
     "@jovita-ai/provider-catalog": "0.1.0",
     "@nestjs/common": "^11.1.24",
     "@nestjs/core": "^11.1.24",
@@ -19,12 +24,16 @@
     "@nestjs/platform-express": "^11.1.24",
     "@nestjs/schedule": "^6.1.1",
     "ajv": "^8.20.0",
+    "axe-core": "^4.13.0",
     "ioredis": "^5.10.0",
     "ipaddr.js": "^2.5.0",
+    "jszip": "^3.10.2",
     "mongoose": "^9.2.4",
+    "puppeteer-core": "^25.10.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "sharp": "0.35.5",
+    "tldts": "^7.4.18",
     "undici": "^7.29.0"
   },
   "devDependencies": {

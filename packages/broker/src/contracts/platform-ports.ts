@@ -3,8 +3,8 @@ export const ARTIFACT_UPLOADS = Symbol('ARTIFACT_UPLOADS');
 export const MEDIA_PROCESSING = Symbol('MEDIA_PROCESSING');
 
 export interface MiniappProviderCredentialService {
-  resolve(environment: string, packId: string, providerId: string): Promise<{ apiKey: string }>;
-  resolveEnvironment(environment: string, providerId: string): Promise<{ apiKey: string }>;
+  resolve(environment: string, packId: string, providerId: string): Promise<Record<string, unknown>>;
+  resolveEnvironment(environment: string, providerId: string): Promise<Record<string, unknown>>;
 }
 
 export interface UploadsService {

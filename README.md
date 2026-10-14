@@ -1,6 +1,6 @@
 # Jovita creator tool
 
-The public TypeScript SDK and `jov` CLI for building Jovita apps. The SDK describes an app and runs its tools. The CLI creates, tests, bundles, connects, and submits the app. Provider keys stay in Jovita's private broker and never go in source code or a `.jov` bundle.
+The public TypeScript SDK, `jov` CLI, provider catalog, and standalone broker for building Jovita apps. The SDK describes an app and runs its tools. The CLI creates, tests, bundles, connects, and submits the app. Provider keys stay in the broker's database and never go in source code or a `.jov` bundle. Jovita Cloud runs its broker privately.
 
 ## A one-call API app
 
@@ -83,7 +83,7 @@ export default defineApp({
   description: 'Run a command with approved broker operations.',
   billing: { tier: 'free', entitlementKey: 'pack.my_command' },
   tools: commandTools({
-    search: { capabilities: ['google.places.text_search'] },
+    search: { capabilities: ['broker.my-command.example_search.search.v1'] },
     export: {},
   }),
 });
@@ -102,15 +102,19 @@ The 17 retained first-party miniapps use this `defineApp` path in the Jovita Saa
 - `packages/sdk`: public authoring API, compiler, and schemas.
 - `packages/runtime`: small authenticated call client used through `@jovita-ai/sdk/runtime` by command apps and through `ctx.call()` by SDK workflows.
 - `packages/cli`: project commands and `.jov` packaging.
+- `packages/provider-catalog`: reviewed built-in operation definitions shared by the broker and generated SDK names. Ordinary external APIs belong in an app declaration.
+- `packages/broker`: self-hostable broker service and generic HTTP, media, and submit/poll execution paths.
 - `examples/fluent-example`: direct API tool.
 - `examples/custom-example`: class-based workflow.
 
-The broker, creator credentials, buyer billing, and platform lifecycle services stay in Jovita's private server repositories. Command apps import `@jovita-ai/sdk/runtime`; direct SDK workflows use `ctx.call()`.
+Run the standalone broker with `docker compose -f compose.broker.yml up --build` after setting `JOVITA_BROKER_SHARED_SECRET` and `JOVITA_DATA_ENCRYPTION_KEY` to separate random values of at least 32 characters. Compose seeds the versioned public catalog before starting the broker. Its health endpoint is `/health`; internal endpoints require signed requests. External creator API calls work without Jovita Cloud. Cloud-only media, hosting, Google Workspace, and owned-resource actions need their respective infrastructure and server callbacks. Jovita Cloud owns buyer billing and creator earnings. Command apps import `@jovita-ai/sdk/runtime`; direct SDK workflows use `ctx.call()`.
+
+Tagging a reviewed commit `broker-vX.Y.Z` builds `ghcr.io/venbrinodevelopers/jovita-broker:broker-vX.Y.Z` from this repository. Deploy that image on a private network with the same MongoDB collections and encryption key used during migration, and run `npm run catalog:seed -w @jovita-ai/broker` once before startup. Do not expose `/internal/broker/*` to the public internet.
 
 ## npm releases
 
-The three public packages are `@jovita-ai/runtime`, `@jovita-ai/sdk`, and `@jovita-ai/cli`. Runtime is published first because the SDK depends on it; the SDK is published before the CLI. Package versions are immutable on npm. When changing the SDK version, update the CLI's exact SDK dependency too. `jov init` reads these versions from the CLI package so generated projects install the matching release.
+The four npm packages are `@jovita-ai/runtime`, `@jovita-ai/provider-catalog`, `@jovita-ai/sdk`, and `@jovita-ai/cli`. The broker source is distributed through this repository and Docker image. Runtime and catalog publish before the SDK; the SDK publishes before the CLI. Package versions are immutable on npm. When changing the SDK version, update the CLI's exact SDK dependency too. `jov init` reads these versions from the CLI package so generated projects install the matching release.
 
-The [publish workflow](.github/workflows/publish.yml) runs on tags named `npm-v<version>` that point to commits on `main`. The tag version must equal the CLI version; SDK and runtime versions change independently. Before tagging, run `npm ci && npm run build && npm run typecheck && npm test`, then review `npm pack --dry-run -w @jovita-ai/runtime`, `npm pack --dry-run -w @jovita-ai/sdk`, and `npm pack --dry-run -w @jovita-ai/cli`. Push the release commit, then create and push the tag, for example `git tag npm-v0.1.4 && git push origin npm-v0.1.4`. The workflow skips any package version already published, which allows a partial release to resume in dependency order.
+The [publish workflow](.github/workflows/publish.yml) runs on tags named `npm-v<version>` that point to commits on `main`. The tag version must equal the CLI version; SDK, catalog, and runtime versions change independently. Before tagging, run `npm ci && npm run build && npm run typecheck && npm test`, then review `npm pack --dry-run` for all four public packages. Push the release commit, then create and push the tag, for example `git tag npm-v0.1.4 && git push origin npm-v0.1.4`. The workflow skips any package version already published, which allows a partial release to resume in dependency order.
 
 Publishing uses npm trusted publishing with GitHub Actions OIDC. Each package must have a trusted publisher configured on npm: GitHub owner `VenbrinoDevelopers`, repository `jovita-creator-tool`, workflow filename `publish.yml`, and direct `npm publish` permission. No npm token is stored in GitHub. The initial version of a new package must be published by its owning npm account before its trusted publisher can be configured.
