@@ -1,6 +1,6 @@
 {
   "name": "@jovita-ai/broker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Self-hostable Jovita broker for declared provider operations",
   "license": "MIT",
   "private": true,
