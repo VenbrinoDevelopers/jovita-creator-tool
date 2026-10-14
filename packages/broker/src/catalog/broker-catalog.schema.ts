@@ -20,7 +20,9 @@ export class BrokerProviderProfile {
 export type BrokerProviderProfileDocument = HydratedDocument<BrokerProviderProfile>;
 export const BrokerProviderProfileSchema = SchemaFactory.createForClass(BrokerProviderProfile);
 
-@Schema({ collection: 'broker_operations', timestamps: true })
+// An empty JSON Schema ({}) is a valid unconstrained contract. Mongoose's
+// default minimization would omit it from persisted operations.
+@Schema({ collection: 'broker_operations', timestamps: true, minimize: false })
 export class BrokerOperation {
   @Prop({ type: String, required: true, unique: true }) capabilityId!: string;
   @Prop({ type: [String], default: [] }) manifestAliases!: string[];

@@ -359,7 +359,12 @@ export class BrokerExecutionService {
   }
 
   private validate(schema: Record<string, unknown>, value: unknown, label: string) {
-    const validator = ajv.compile(schema);
+    // Older operation records lost an intentionally empty output schema to
+    // Mongoose minimization. Treat only that missing output contract as {} so
+    // an already-completed provider run can be reconciled without resubmission.
+    const effectiveSchema = schema ?? (label === 'output' ? {} : undefined);
+    if (!effectiveSchema) throw new BadRequestException('Operation input schema is missing');
+    const validator = ajv.compile(effectiveSchema);
     if (!validator(value)) {
       if (label === 'input') throw new BadRequestException('Operation input failed its schema');
       throw new BadGatewayException('Provider output failed its schema');

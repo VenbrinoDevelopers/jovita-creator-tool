@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
+import { model } from 'mongoose';
 import { BrokerCatalogService } from '../../src/catalog/broker-catalog.service.js';
+import { BrokerOperationSchema } from '../../src/catalog/broker-catalog.schema.js';
 import { ProviderMediaValidationError } from '../../src/operations/provider-media.js';
 
 const schema = { type: 'object', properties: { value: { type: 'string' } }, required: ['value'], additionalProperties: false };
@@ -38,6 +40,11 @@ function fixture(granted = true) {
 }
 
 describe('creator broker route enforcement', () => {
+  it('preserves an empty output schema when serializing an operation', () => {
+    const Operation = model('BrokerOperationEmptySchemaRegression', BrokerOperationSchema);
+    expect(new Operation({ outputSchema: {} }).toObject().outputSchema).toEqual({});
+  });
+
   it('rejects a route without a tool grant before dispatch', async () => {
     const { service, provider, executions } = fixture(false);
     await expect(service.invoke(input)).rejects.toThrow('Tool has no grant');
@@ -325,6 +332,25 @@ describe('creator broker route enforcement', () => {
     expect(provider).toHaveBeenCalledOnce();
     expect(provider.mock.calls[0]?.[1]).toMatchObject({ encryptedApiKey: 'original-encrypted-key' });
     expect(provider.mock.calls[0]?.[2]).toMatchObject({ method: 'GET', path: '/jobs/{job_id}' });
+  });
+
+  it('reconciles a completed legacy run whose empty output schema was omitted by MongoDB', async () => {
+    const { service, operations, provider, executions } = fixture();
+    const poll = { path: '/runs/{job_id}', jobIdField: 'runId', statusField: 'status',
+      resultField: 'output', successValue: 'COMPLETED', failureValue: 'FAILED',
+      providerStatusField: 'providerResponse.httpStatus', intervalMs: 250, maxAttempts: 1 };
+    operations.findOne.mockReturnValue({ lean: async () => ({ ...operation,
+      executionKind: 'http-poll', poll, outputSchema: undefined }) } as never);
+    executions.findOne.mockReturnValue({ select: () => ({ lean: async () => ({ status: 'started',
+      requestHash: 'hash', upstreamRunId: 'run123', encryptedCredential: 'original-encrypted-key',
+      ownerId: 'buyer' }) }) } as never);
+    provider.mockResolvedValue({ status: 'COMPLETED', providerResponse: { httpStatus: 200 },
+      output: { companies: [{ name: 'Example' }] } });
+    await expect(service.reconcile({ invocationId: 'invocation', callId: 'call',
+      capability: operation.capabilityId, packId: 'tool', environment: 'test' }))
+      .resolves.toMatchObject({ status: 'succeeded',
+        result: { result: { companies: [{ name: 'Example' }] } } });
+    expect(provider).toHaveBeenCalledOnce();
   });
 
   it('rejects unbounded or unbound poll routes', () => {
