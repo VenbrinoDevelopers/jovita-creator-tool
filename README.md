@@ -73,19 +73,23 @@ The SDK compiles both styles into the same manifest and `.jov` format. Existing 
 
 ## Command-backed apps
 
-A command-backed app can keep an established CLI workflow and declare its tools with `defineApp`. Put `runtime/jovita.app.ts` beside the command source. A command tool defines the CLI argument route, its allowed broker calls, activity, and billing requirement. Larger apps can keep these technical declarations in `runtime/tools.ts` and `runtime/release-metadata.ts`. Store copy belongs in Creator Studio. `jov sync` writes a generated `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. The SDK declaration remains the authoring source.
+A command-backed app can keep an established CLI workflow and declare its tools with `defineApp`. Put `runtime/jovita.app.ts` beside the command source. A command tool names its allowed broker calls; the SDK normally uses the tool name as the CLI command and infers whether billing is required. Use explicit routing or billing only for commands that differ from those defaults. Larger apps can keep tool definitions in `runtime/tools.ts`. Store copy belongs in Creator Studio. `jov sync` writes a generated `jovita.service.json`; `jov sync --check`, `jov lint`, and `jov build` reject a stale copy. The SDK declaration remains the authoring source.
 
 ```ts
-import { defineApp } from '@jovita-ai/sdk';
-import { tools } from './tools.js';
+import { defineApp, commandTools } from '@jovita-ai/sdk';
 
 export default defineApp({
   id: 'my-command', name: 'My Command', version: '1.0.0',
   description: 'Run a command with approved broker operations.',
-  tools,
-  healthCheck: { command: 'my-command', args: ['--help'], operationId: 'offline' },
+  billing: { tier: 'free', entitlementKey: 'pack.my_command' },
+  tools: commandTools({
+    search: { capabilities: ['google.places.text_search'] },
+    export: {},
+  }),
 });
 ```
+
+This creates `search` and `export` command routes, a free `offline` health route using `--help`, and default activity messages. `search` requires billing because it uses a broker capability. Set `healthArgs` for a different free health command, such as `['describe']`. Keep `argvPrefix`, `requiredArgs`, `excludedArgs`, `billingRequired`, and custom `activity` when an existing CLI needs them. Keep nondefault `skill`, `compat`, OAuth, or runtime build settings in `jovita.app.ts`.
 
 Use `@jovita-ai/sdk/runtime` inside command code for broker calls and receipt recovery. `jov dev <tool-id> --dir <app> --args-json '["--query","example"]'` runs a command tool with local response fixtures. A custom SDK workflow uses `run(ctx, input)` and `ctx.call()`; command-backed tools keep their established argument and output contract.
 

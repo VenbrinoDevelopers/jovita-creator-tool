@@ -47,10 +47,8 @@ test('a command-backed defineApp packages the existing executable from its SDK s
     writeFileSync(join(root, 'runtime/jovita.app.ts'), `import { defineApp, commandTools } from '@jovita-ai/sdk';
 export default defineApp({ id: 'test-command', name: 'Test Command', version: '1.0.0',
   description: 'Find a test result from the existing command.',
-  tools: commandTools([{ id: 'health', argvPrefix: ['health'], capabilities: [],
-    billingRequired: false, activity: { kind: 'check', object: 'service health' } },
-    { id: 'find', argvPrefix: ['find'], capabilities: ['test.lookup'],
-    billingRequired: true, activity: { kind: 'search', object: 'result' } }]),
+  tools: commandTools({ health: { activity: { kind: 'check', object: 'service health' } },
+    find: { capabilities: ['test.lookup'], activity: { kind: 'search', object: 'result' } } }),
   healthCheck: { command: 'test-command', args: ['health'], operationId: 'health' } });`);
     const app = await loadProjectDefinition(root);
     assert.ok(isCommandApp(app));

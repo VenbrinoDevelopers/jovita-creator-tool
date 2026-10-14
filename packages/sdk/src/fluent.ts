@@ -59,7 +59,7 @@ export function defineApp(options: (Pick<AppOptions, 'id' | 'name' | 'version'>
   if (Object.values(options.tools).some(spec => spec instanceof CommandToolSpec)) {
     return new CommandApp(options as CommandAppOptions);
   }
-  if ('command' in options || 'healthCheck' in options || 'runtimeBuild' in options) {
+  if ('command' in options || 'healthCheck' in options || 'healthArgs' in options || 'runtimeBuild' in options) {
     throw new Error('Command apps must declare tools with commandTool or commandTools');
   }
   const providers = new Map<ProviderBuilder, JovitaProvider>();

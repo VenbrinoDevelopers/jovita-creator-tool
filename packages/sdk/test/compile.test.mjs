@@ -21,6 +21,62 @@ test('command-backed defineApp retains CLI routing, grants, and storefront field
     { id: 'find', argvPrefix: ['b'], capabilities: [], billingRequired: false }]), /Duplicate/);
 });
 
+test('concise command tools infer routing and billing and generate a free health operation', () => {
+  const app = defineApp({ id: 'local-leads', name: 'Local Leads', version: '1.0.0',
+    description: 'Find local customers.', billing: { tier: 'free', entitlementKey: 'pack.local_leads' },
+    tools: commandTools({
+      search: { capabilities: ['google.places.text_search'] },
+      generate: { capabilities: ['serper.maps.search'] },
+    }),
+  });
+  const manifest = compileApp(app);
+  assert.deepEqual(manifest.runtime.execute.operations, [
+    { id: 'offline', argvPrefix: [], excludedArgs: ['search', 'generate'],
+      capabilities: [], billingRequired: false, activity: { kind: 'read', object: 'Local Leads information', icon: 'document' } },
+    { id: 'search', argvPrefix: ['search'], capabilities: ['google.places.text_search'], billingRequired: true,
+      activity: { kind: 'run', object: 'search', icon: 'command' } },
+    { id: 'generate', argvPrefix: ['generate'], capabilities: ['serper.maps.search'], billingRequired: true,
+      activity: { kind: 'run', object: 'generate', icon: 'command' } },
+  ]);
+  assert.deepEqual(manifest.runtime.execute.healthCheck,
+    { command: 'local-leads', args: ['--help'], operationId: 'offline' });
+  assert.deepEqual(manifest.skill, { entry: 'skill/SKILL.md', assets: ['skill/SKILL.md'] });
+  assert.deepEqual(manifest.compat, { minRuntimeVersion: '0.1.0' });
+});
+
+test('command tools retain explicit routing and paid local workflows', () => {
+  const app = defineApp({ id: 'advanced', name: 'Advanced', version: '1.0.0',
+    tools: commandTools({
+      doctor: { argvPrefix: ['runtime', 'doctor'] },
+      'create-fast': { argvPrefix: ['create'], requiredArgs: ['--profile', 'fast'],
+        capabilities: ['openrouter.images.generate'], partialExitCodes: [2] },
+      finalize: { billingRequired: true },
+    }),
+    healthCheck: { command: 'advanced', args: ['runtime', 'doctor'], operationId: 'doctor' },
+  });
+  const operations = compileApp(app).runtime.execute.operations;
+  assert.equal(operations.length, 3);
+  assert.deepEqual(operations[0], { id: 'doctor', argvPrefix: ['runtime', 'doctor'],
+    capabilities: [], billingRequired: false, activity: { kind: 'read', object: 'doctor', icon: 'document' } });
+  assert.deepEqual(operations[1].requiredArgs, ['--profile', 'fast']);
+  assert.equal(operations[2].billingRequired, true);
+});
+
+test('custom health arguments use the generated free route without changing authored tools', () => {
+  const tools = commandTools({ plan: { capabilities: ['openrouter.chat.generate'] } });
+  const app = defineApp({ id: 'brandkit', name: 'Brandkit', version: '1.0.0',
+    healthArgs: ['describe'], tools });
+  const first = compileApp(app);
+  const second = compileApp(app);
+  assert.deepEqual(first, second);
+  assert.deepEqual(first.runtime.execute.healthCheck,
+    { command: 'brandkit', args: ['describe'], operationId: 'offline' });
+  assert.deepEqual(first.runtime.execute.operations[0],
+    { id: 'offline', argvPrefix: [], excludedArgs: ['plan'], capabilities: [],
+      billingRequired: false, activity: { kind: 'read', object: 'Brandkit information', icon: 'document' } });
+  assert.deepEqual(Object.keys(tools), ['plan']);
+});
+
 test('one route compiles to one priced operation and one limited tool grant', () => {
   const search = provider({ name: 'Search API', baseUrl: 'https://api.example.com', auth: 'bearer' });
   const app = defineApp({ id: 'search-app', name: 'Search App', version: '1.0.0', tools: {
