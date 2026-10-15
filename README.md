@@ -29,7 +29,7 @@ export default defineApp({
 });
 ```
 
-`provider()` describes a host and authentication method. The `search.post()` declaration describes one versioned operation, its schemas, and its fixed buyer credit price. The key is entered separately with `jov connect` after Jovita approves the host. The tool can only call its declared operation, at most once per invocation. The app's one-time purchase price is set separately at submission.
+`provider()` describes a host and authentication method. The `search.post()` declaration describes one versioned operation, its schemas, and its fixed buyer credit price. Jovita checks that the host is public and uses HTTPS automatically; the key is entered separately with `jov connect`. The tool can only call its declared operation, at most once per invocation. The app's one-time purchase price is set separately at submission.
 
 ## Start and test
 
