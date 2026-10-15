@@ -40,6 +40,48 @@ function fixture(granted = true) {
 }
 
 describe('creator broker route enforcement', () => {
+  it('makes a public HTTPS provider usable immediately without an admin action', async () => {
+    const profiles = { create: vi.fn(async (value: unknown) => value) };
+    const service = new BrokerCatalogService(profiles as never, {} as never, {} as never,
+      {} as never, {} as never, {} as never);
+    const check = vi.spyOn((service as any).transport, 'assertPublicHost').mockResolvedValue(undefined);
+    await expect(service.createProfile(profile.creatorId, { profileId: 'search', name: 'Search',
+      summary: 'Public search API', docsUrl: 'https://example.com/docs', category: 'search',
+      baseUrl: 'https://api.example.com/v1/', authMethod: 'bearer', timeoutMs: 30_000 }))
+      .resolves.toMatchObject({ status: 'approved', baseUrl: 'https://api.example.com/v1/' });
+    expect(check).toHaveBeenCalledWith('api.example.com');
+    expect(profiles.create).toHaveBeenCalledOnce();
+  });
+
+  it('does not store a provider whose host fails public-address validation', async () => {
+    const profiles = { create: vi.fn() };
+    const service = new BrokerCatalogService(profiles as never, {} as never, {} as never,
+      {} as never, {} as never, {} as never);
+    vi.spyOn((service as any).transport, 'assertPublicHost').mockRejectedValue(new Error('restricted address'));
+    await expect(service.createProfile(profile.creatorId, { profileId: 'search', name: 'Search',
+      summary: 'Unsafe API', docsUrl: 'https://example.com/docs', category: 'search',
+      baseUrl: 'https://internal.example.com/', authMethod: 'bearer' }))
+      .rejects.toThrow('restricted address');
+    expect(profiles.create).not.toHaveBeenCalled();
+  });
+
+  it('promotes an existing draft during connection setup after validating its host', async () => {
+    const draft = { ...profile, status: 'draft' };
+    const profiles = { findOne: vi.fn(async () => draft), updateOne: vi.fn(async () => ({ matchedCount: 1, modifiedCount: 1 })) };
+    const connections = { findOne: vi.fn(async () => null), findOneAndUpdate: vi.fn(() => ({
+      select: () => ({ lean: async () => ({ profileId: profile.profileId, testStatus: 'untested' }) }),
+    })) };
+    const service = new BrokerCatalogService(profiles as never, {} as never, connections as never,
+      {} as never, {} as never, { encrypt: (value: string) => value } as never);
+    const check = vi.spyOn((service as any).transport, 'assertPublicHost').mockResolvedValue(undefined);
+    await expect(service.saveConnection(profile.creatorId,
+      { profileId: profile.profileId, name: 'Main', apiKey: 'key' }))
+      .resolves.toMatchObject({ testStatus: 'untested' });
+    expect(check).toHaveBeenCalledWith('example.com');
+    expect(profiles.updateOne).toHaveBeenCalledWith({ profileId: profile.profileId, status: 'draft' },
+      expect.objectContaining({ $set: { status: 'approved' } }));
+  });
+
   it('preserves an empty output schema when serializing an operation', () => {
     const Operation = model('BrokerOperationEmptySchemaRegression', BrokerOperationSchema);
     expect(new Operation({ outputSchema: {} }).toObject().outputSchema).toEqual({});

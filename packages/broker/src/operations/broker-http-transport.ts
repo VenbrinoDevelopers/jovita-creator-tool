@@ -236,7 +236,9 @@ export class BrokerHttpTransport {
 
   async assertPublicHost(host: string) {
     if (!host || host === 'localhost' || isIP(host) || !host.includes('.')) throw new BadRequestException('Provider must use a public DNS host');
-    const addresses = await lookup(host, { all: true });
+    let addresses: Array<{ address: string; family: number }>;
+    try { addresses = await lookup(host, { all: true }); }
+    catch { throw new BadRequestException('Provider host could not be resolved'); }
     if (!addresses.length || addresses.some(item => !this.publicAddress(item.address))) throw new BadRequestException('Provider host resolves to a restricted address');
   }
   publicAddress(address: string) {

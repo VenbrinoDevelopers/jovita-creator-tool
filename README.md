@@ -63,7 +63,7 @@ jov submit build/web-search-1.0.0-linux-amd64.jov --price-cents 0
 
 `jov login` uses the creator email code flow and saves rotating session tokens under `~/.config/jovita/creator-session.json` with owner-only file permissions. Set `JOVITA_API_URL` to another HTTPS API origin for a nonproduction environment. For automation, `JOVITA_CREATOR_TOKEN` can replace a saved session. Run `jov logout` to remove the local session.
 
-The server imports the public broker operation declaration and requests host approval. If approval or a tested connection is missing, `jov submit` leaves the release as a draft. Finish setup, then rerun with `--release-id`. Fill in the buyer-facing store listing, prompts, and examples in Creator Studio when uploading or afterward; they are not part of the SDK app declaration. The release still needs Jovita's publishing review. Neither the CLI nor SDK handles the buyer's card or wallet; Jovita reserves and settles the declared credits for each successful operation call.
+The server imports the public broker operation declaration and validates its HTTPS host automatically. If the host fails validation or a tested connection is missing, `jov submit` leaves the release as a draft. Finish setup, then rerun with `--release-id`. Fill in the buyer-facing store listing, prompts, and examples in Creator Studio when uploading or afterward; they are not part of the SDK app declaration. The release still needs Jovita's publishing review. Neither the CLI nor SDK handles the buyer's card or wallet; Jovita reserves and settles the declared credits for each successful operation call.
 
 ## Custom apps
 

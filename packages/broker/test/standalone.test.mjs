@@ -25,7 +25,7 @@ async function post(path, body = {}) {
   return value;
 }
 
-test('standalone manifest, approval, key test and rotation, grant, invoke and duplicate recovery',
+test('standalone manifest, automatic host validation, key test and rotation, grant, invoke and duplicate recovery',
   { skip: !origin || !secret }, async () => {
     const health = await fetch(new URL('/health', origin));
     assert.equal(health.status, 200);
@@ -40,7 +40,6 @@ test('standalone manifest, approval, key test and rotation, grant, invoke and du
     const imported = await post('/internal/broker/catalog/manifest/import',
       { creatorId, packId, broker, capabilities: [reference] });
     assert.deepEqual(imported.capabilityIds, [reference]);
-    await post('/internal/broker/catalog/profile/approve', { profileId, adminId: creatorId });
     const connection = await post('/internal/broker/catalog/connection', { creatorId,
       connection: { profileId, name: 'Echo test', apiKey: 'dummy-key-one' } });
     assert.equal(connection.testStatus, 'untested');

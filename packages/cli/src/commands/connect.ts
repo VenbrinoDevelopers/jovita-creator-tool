@@ -32,11 +32,7 @@ export const connectCommand = new Command('connect')
         '/creator/tools/providers/profiles', 'POST', { profileId: providerId, ...provider.config });
       profile = { ...created, name: provider.config.name };
     }
-    if (profile.status !== 'approved') {
-      console.log(JSON.stringify({ ok: false, status: profile.status, profileId: profile.profileId,
-        next: 'An admin must approve this provider host. Run jov connect again after approval.' }, null, 2));
-      return;
-    }
+    if (profile.status !== 'approved') throw new Error('Provider host did not pass public HTTPS validation. Check its URL and DNS, then retry.');
     for (const operation of provider.operations()) {
       const capabilityId = `creator.${profile.profileId}.${operation.definition.id}.v${operation.definition.version ?? 1}`;
       if (catalog.operations.some(row => row.capabilityId === capabilityId)) continue;

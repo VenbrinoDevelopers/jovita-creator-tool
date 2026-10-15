@@ -33,7 +33,7 @@ export const submitCommand = new Command('submit')
       for (const provider of declaration.providers) {
         const profile = catalog.profiles.find(row => row.profileId.endsWith(`-${provider.id}`));
         if (!profile || profile.status !== 'approved') {
-          pending.push(`${provider.id}: provider host approval`);
+          pending.push(`${provider.id}: provider host must pass public HTTPS validation`);
           continue;
         }
         const connections = catalog.connections.filter(row => row.profileId === profile.profileId && row.testStatus === 'ok');

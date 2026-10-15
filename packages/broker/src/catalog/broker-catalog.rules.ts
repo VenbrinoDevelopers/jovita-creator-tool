@@ -18,7 +18,7 @@ export class BrokerCatalogRules {
       'intervalMs', 'maxAttempts'], 'poll');
     const path = String(row.path ?? '');
     if (!SAFE_PATH.test(path) || path.split('{job_id}').length !== 2 || path.includes('..')) {
-      throw new BadRequestException('Poll path must contain {job_id} on the approved host');
+      throw new BadRequestException('Poll path must contain {job_id} on the same provider host');
     }
     const jobIdField = this.fieldPath(row.jobIdField);
     const statusField = this.fieldPath(row.statusField);
@@ -57,7 +57,7 @@ export class BrokerCatalogRules {
     const row = this.objectWithKeys(value, ['path', 'kind', 'maxBytes', 'retentionSeconds', 'timeoutMs'], 'artifact');
     const path = String(row.path ?? '');
     if (!SAFE_PATH.test(path) || path.split('{job_id}').length !== 2 || path.includes('..')) {
-      throw new BadRequestException('Download path must contain {job_id} on the approved host');
+      throw new BadRequestException('Download path must contain {job_id} on the same provider host');
     }
     const mediaKind = row.kind;
     if (mediaKind !== 'video' && mediaKind !== 'audio') throw new BadRequestException('Select a reviewed media kind');

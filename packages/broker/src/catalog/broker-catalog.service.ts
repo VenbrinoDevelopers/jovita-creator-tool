@@ -47,17 +47,18 @@ export class BrokerCatalogService implements OnModuleInit {
   async compactExecutionResults(): Promise<void> { await this.execution.compactExecutionResults(); }
 
   async list(creatorId: string) {
+    // Profiles created before automatic host validation may still be drafts.
+    // Promote safe hosts when their owner opens the catalog; failed checks stay
+    // visible so the creator can correct the host rather than wait for an admin.
+    const drafts = await this.profiles.find({ creatorId, status: 'draft' });
+    await Promise.all(drafts.map(async profile => {
+      try { await this.ensureUsableProfile(profile); } catch { /* Keep the draft visible. */ }
+    }));
     const [profiles, operations, connections, grants] = await Promise.all([
       this.profiles.find({ creatorId }).lean(), this.operations.find({ creatorId }).lean(),
       this.connections.find({ creatorId }).lean(), this.grants.find({ creatorId }).lean(),
     ]);
     return { profiles, operations, connections, grants, minimumBuyerCredits: this.rules.minimumBuyerCredits() };
-  }
-
-  async pendingProfiles() {
-    return this.profiles.find({ status: 'draft' })
-      .select('profileId creatorId name summary docsUrl category baseUrl authMethod authHeader timeoutMs status createdAt')
-      .sort({ createdAt: 1 }).lean();
   }
 
   /** Import public declarations from a creator bundle. Re-uploading identical versions is safe. */
@@ -133,8 +134,8 @@ export class BrokerCatalogService implements OnModuleInit {
         || (profile.authHeader ?? '') !== (item.profile.authHeader ?? ''))) {
         throw new ConflictException('Manifest provider differs from its saved profile');
       }
-      if (!profile) profile = await this.draftProfile(creatorId, item.profile);
-      if (profile.status === 'rejected') throw new ConflictException('Manifest provider host was rejected');
+      if (!profile) profile = await this.createProfile(creatorId, item.profile);
+      await this.ensureUsableProfile(profile);
       for (const operation of item.operations) {
         const capabilityId = `creator.${item.profileId}.${operation.operationId}.v${operation.version}`;
         const aliasId = `broker.${packId}.${item.profile.profileId}.${operation.operationId}.v${operation.version}`;
@@ -162,14 +163,14 @@ export class BrokerCatalogService implements OnModuleInit {
             plain(expected[field])))) {
             throw new ConflictException(`Manifest operation ${capabilityId} differs from its saved version`);
           }
-        } else await this.createOperation(creatorId, operation, true);
+        } else await this.createOperation(creatorId, operation);
         await this.operations.updateOne({ capabilityId }, { $addToSet: { manifestAliases: aliasId } });
       }
     }
     return { imported: declared.size, capabilityIds: [...declared].sort() };
   }
 
-  async draftProfile(creatorId: string, body: Partial<BrokerProviderProfile>) {
+  async createProfile(creatorId: string, body: Partial<BrokerProviderProfile>) {
     const requestedId = this.rules.id(body.profileId, 'profileId');
     if (requestedId.length > 32 || !/^[a-f0-9]{24}$/.test(creatorId)) throw new BadRequestException('Invalid provider owner or ID');
     const profileId = `c${creatorId}-${requestedId}`;
@@ -184,24 +185,15 @@ export class BrokerCatalogService implements OnModuleInit {
     }
     const timeoutMs = Number(body.timeoutMs ?? 30_000);
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 120_000) throw new BadRequestException('Invalid provider timeout');
+    await this.transport.assertPublicHost(new URL(baseUrl).hostname);
     return this.profiles.create({ profileId, creatorId, name: this.rules.text(body.name, 100),
       summary: this.rules.text(body.summary, 500), docsUrl, category: this.rules.text(body.category, 80),
-      baseUrl, authMethod, authHeader, timeoutMs, status: 'draft' });
+      baseUrl, authMethod, authHeader, timeoutMs, status: 'approved' });
   }
 
-  async approveProfile(profileId: string, adminId: string) {
-    const profile = await this.requireProfile(profileId);
-    const host = new URL(profile.baseUrl).hostname;
-    await this.transport.assertPublicHost(host);
-    profile.status = 'approved'; profile.approvedBy = adminId; profile.approvedAt = new Date();
-    return profile.save();
-  }
-
-  async createOperation(creatorId: string, body: Partial<BrokerOperation>, allowDraft = false) {
+  async createOperation(creatorId: string, body: Partial<BrokerOperation>) {
     const profile = await this.ownedProfile(creatorId, String(body.profileId ?? ''));
-    if (profile.status !== 'approved' && (!allowDraft || profile.status !== 'draft')) {
-      throw new ConflictException('Provider host approval is required');
-    }
+    await this.ensureUsableProfile(profile);
     const operationId = this.rules.id(body.operationId, 'operationId');
     const version = Number(body.version);
     if (!Number.isSafeInteger(version) || version < 1 || version > 1000) throw new BadRequestException('Invalid operation version');
@@ -270,7 +262,7 @@ export class BrokerCatalogService implements OnModuleInit {
 
   async saveConnection(creatorId: string, body: { connectionId?: string; profileId: string; name: string; apiKey: string }) {
     const profile = await this.ownedProfile(creatorId, body.profileId);
-    if (profile.status !== 'approved') throw new ConflictException('Provider host approval is required');
+    await this.ensureUsableProfile(profile);
     const apiKey = String(body.apiKey ?? '');
     if (!apiKey || Buffer.byteLength(apiKey) > 8192 || /[\r\n]/.test(apiKey)) throw new BadRequestException('Invalid API key');
     const connectionId = body.connectionId ? this.rules.id(body.connectionId, 'connectionId') : `connection_${randomUUID()}`;
@@ -288,7 +280,7 @@ export class BrokerCatalogService implements OnModuleInit {
     sampleInput: Record<string, unknown> = {}, confirmProviderCharge = false) {
     const connection = await this.ownedConnection(creatorId, connectionId);
     const profile = await this.requireProfile(connection.profileId);
-    await this.transport.assertPublicHost(new URL(profile.baseUrl).hostname);
+    await this.ensureUsableProfile(profile);
     const operation = await this.operations.findOne({ profileId: profile.profileId,
       ...(capabilityId ? { capabilityId } : { method: 'GET' }) }).lean();
     if (!operation) throw new ConflictException('Create an operation before testing this connection');
@@ -330,7 +322,7 @@ export class BrokerCatalogService implements OnModuleInit {
   }
 
   async definitions() {
-    // Draft declarations are visible for release validation; invoke and activation still require approval.
+    // Declarations are visible for release validation; invocation still requires a tested key and a route grant.
     const operations = await this.operations.find({}).lean();
     return operations.flatMap(operation => [operation.capabilityId, ...(operation.manifestAliases ?? [])].map(capability => ({ capability, providerId: operation.profileId,
       credentialSource: 'none' as const, credentialScope: 'pack' as const, credentialFields: [],
@@ -347,8 +339,10 @@ export class BrokerCatalogService implements OnModuleInit {
   async activationRequirements(capabilityId: string, packId: string) {
     const operation = await this.operationFor(capabilityId, packId);
     if (!operation) return { ready: false, reason: 'Creator operation is missing from the catalog' };
-    const profile = await this.profiles.findOne({ profileId: operation.profileId, status: 'approved' }).lean();
-    if (!profile) return { ready: false, reason: 'Provider host is awaiting approval' };
+    const profile = await this.profiles.findOne({ profileId: operation.profileId });
+    if (!profile) return { ready: false, reason: 'Provider is missing from the catalog' };
+    try { await this.ensureUsableProfile(profile); }
+    catch { return { ready: false, reason: 'Provider host must resolve to a public HTTPS address' }; }
     const grant = await this.grants.findOne({ packId, capabilityId: operation.capabilityId, creatorId: operation.creatorId,
       status: 'active' }).lean();
     if (!grant) return { ready: false, reason: 'Grant this operation to the tool before activating its price' };
@@ -362,7 +356,7 @@ export class BrokerCatalogService implements OnModuleInit {
     const operation = await this.operationFor(input.capability, input.packId);
     if (!operation) throw new NotFoundException('Creator operation not found');
     const profile = await this.requireProfile(operation.profileId);
-    if (profile.status !== 'approved') throw new ForbiddenException('Provider host is not approved');
+    await this.ensureUsableProfile(profile);
     const grant = await this.grants.findOne({ packId: input.packId, capabilityId: operation.capabilityId, status: 'active' }).lean();
     if (!grant || grant.creatorId !== operation.creatorId) throw new ForbiddenException('Tool has no grant for this route');
     const connection = await this.connections.findOne({ connectionId: grant.connectionId, creatorId: grant.creatorId, testStatus: 'ok' })
@@ -402,6 +396,18 @@ export class BrokerCatalogService implements OnModuleInit {
     const row = await this.profiles.findOne({ profileId });
     if (!row) throw new NotFoundException('Provider profile not found');
     return row;
+  }
+  private async ensureUsableProfile(profile: BrokerProviderProfileDocument): Promise<void> {
+    if (profile.status === 'rejected') throw new ConflictException('Provider host is unavailable');
+    if (profile.status === 'approved') return;
+    await this.transport.assertPublicHost(new URL(profile.baseUrl).hostname);
+    const updated = await this.profiles.updateOne({ profileId: profile.profileId, status: 'draft' },
+      { $set: { status: 'approved' }, $unset: { approvedBy: 1, approvedAt: 1 } });
+    if (!updated.matchedCount) {
+      const current = await this.profiles.findOne({ profileId: profile.profileId });
+      if (current?.status !== 'approved') throw new ConflictException('Provider host is unavailable');
+    }
+    profile.status = 'approved';
   }
   private async ownedProfile(creatorId: string, profileId: string) {
     const row = await this.requireProfile(profileId);

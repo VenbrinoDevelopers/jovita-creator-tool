@@ -57,14 +57,10 @@ export class BrokerController {
   reconcile(@Body() body: Parameters<BrokerCatalogService['reconcile']>[0]) { return this.catalog.reconcile(body); }
   @Post('catalog/list')
   list(@Body() body: { creatorId: string }) { return this.catalog.list(body.creatorId); }
-  @Post('catalog/profile/draft')
-  draft(@Body() body: { creatorId: string; profile: Parameters<BrokerCatalogService['draftProfile']>[1] }) {
-    return this.catalog.draftProfile(body.creatorId, body.profile);
+  @Post('catalog/profile/create')
+  createProfile(@Body() body: { creatorId: string; profile: Parameters<BrokerCatalogService['createProfile']>[1] }) {
+    return this.catalog.createProfile(body.creatorId, body.profile);
   }
-  @Post('catalog/profile/approve')
-  approve(@Body() body: { profileId: string; adminId: string }) { return this.catalog.approveProfile(body.profileId, body.adminId); }
-  @Post('catalog/profile/pending')
-  pending() { return this.catalog.pendingProfiles(); }
   @Post('catalog/operation')
   operation(@Body() body: { creatorId: string; operation: Parameters<BrokerCatalogService['createOperation']>[1] }) {
     return this.catalog.createOperation(body.creatorId, body.operation);
